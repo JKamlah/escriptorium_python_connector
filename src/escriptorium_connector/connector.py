@@ -1,28 +1,66 @@
+from io import BufferedReader
+from typing import Union
 from numpy import int0
 import requests
 import logging
 import backoff
+import websocket
+import json
 
 logger = logging.getLogger(__name__)
 
 
 class EscriptoriumConnector:
-    def __init__(self, base_url: str, api_url: str, token: str, project: str = None):
+    def __init__(
+        self,
+        base_url: str,
+        api_url: str,
+        token: str,
+        cookie: str = None,
+        project: str = None,
+    ):
         # Make sure the urls terminates with a front slash
         self.api_url = api_url if api_url[-1] == "/" else api_url + "/"
         self.base_url = base_url if base_url[-1] == "/" else base_url + "/"
 
         self.headers = {"Accept": "application/json", "Authorization": f"Token {token}"}
         self.project = project
+        self.cookie = cookie
+
+    def __on_message(self, ws, message):
+        logging.debug(message)
+
+    def __on_error(self, ws, error):
+        logging.debug(error)
+
+    def __on_close(self, ws, close_status_code, close_msg):
+        logging.debug("### websocket closed ###")
+        logging.debug(close_status_code)
+        logging.debug(close_msg)
+
+    def __on_open(self, ws):
+        logging.debug("### websocket opened ###")
+
+        # def run(*args):
+        #     for i in range(3):
+        #         time.sleep(1)
+        #         ws.send("Hello %d" % i)
+        #     time.sleep(1)
+        #     ws.close()
+        #     print("thread terminating...")
+
+        # thread.start_new_thread(run, ())
 
     @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
-    def __get_url(self, url: str):
+    def __get_url(self, url: str) -> requests.Response:
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r
 
     @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
-    def __post_url(self, url: str, payload: object, files: object = None) -> object:
+    def __post_url(
+        self, url: str, payload: object, files: object = None
+    ) -> requests.Response:
         r = (
             requests.post(url, data=payload, files=files, headers=self.headers)
             if files is not None
@@ -32,7 +70,9 @@ class EscriptoriumConnector:
         return r
 
     @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
-    def __put_url(self, url: str, payload: object, files: object = None) -> object:
+    def __put_url(
+        self, url: str, payload: object, files: object = None
+    ) -> requests.Response:
         r = (
             requests.put(url, data=payload, files=files, headers=self.headers)
             if files is not None
@@ -42,7 +82,7 @@ class EscriptoriumConnector:
         return r
 
     @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
-    def __delete_url(self, url: str) -> object:
+    def __delete_url(self, url: str) -> requests.Response:
         r = requests.delete(url, headers=self.headers)
         r.raise_for_status()
         return r
@@ -76,7 +116,7 @@ class EscriptoriumConnector:
         return r.json()
 
     def get_document_part_region(self, doc_pk: int, part_pk: int, region_pk: int):
-        regions = self.get_document_part_regions(self, doc_pk, part_pk)
+        regions = self.get_document_part_regions(doc_pk, part_pk)
         region = [x for x in regions if x["pk"] == region_pk]
         return region[0] if region else None
 
@@ -84,7 +124,7 @@ class EscriptoriumConnector:
         self, doc_pk: int, part_pk: int, line_pk: int, transcription_pk: int
     ):
         transcriptions = self.get_document_part_line_transcriptions(
-            self, doc_pk, part_pk, line_pk
+            doc_pk, part_pk, line_pk
         )
         transcription = [x for x in transcriptions if x["pk"] == transcription_pk]
         return transcription[0] if transcription else None
@@ -92,7 +132,7 @@ class EscriptoriumConnector:
     def get_document_part_line_transcriptions(
         self, doc_pk: int, part_pk: int, line_pk: int
     ):
-        line = self.get_document_part_line(self, doc_pk, part_pk, line_pk)
+        line = self.get_document_part_line(doc_pk, part_pk, line_pk)
         return line["transcriptions"]
 
     def get_document_part_regions(self, doc_pk: int, part_pk: int):
@@ -117,9 +157,88 @@ class EscriptoriumConnector:
         r = self.__get_url(f"{self.api_url}documents/{doc_pk}/transcriptions/")
         return r.json()
 
+    def download_part_alto_transcription(
+        self,
+        document_pk: int,
+        part_pk: int,
+        transcription_pk: int,
+    ) -> Union[bytes, None]:
+        if self.cookie is None:
+            raise Exception("Must use websockets to download ALTO exports")
+
+        download_link = None
+        ws = websocket.WebSocket()
+        ws.connect(
+            f"{self.base_url.replace('http', 'ws')}ws/notif/", cookie=self.cookie
+        )
+        self.__post_url(
+            f"{self.api_url}documents/{document_pk}/export/",
+            {
+                "task": "export",
+                "document": document_pk,
+                "parts": part_pk,
+                "transcription": transcription_pk,
+                "file_format": "alto",
+            },
+        )
+
+        message = ws.recv()
+        ws.close()
+        logging.debug(message)
+        msg = json.loads(message)
+        if "export" in msg["text"].lower():
+            for entry in msg["links"]:
+                if entry["text"].lower() == "download":
+                    download_link = entry["src"]
+
+        if download_link is None:
+            logging.warning(
+                f"Did not receive a link to download ALTO export for {document_pk}, {part_pk}, {transcription_pk}"
+            )
+            return None
+
+        alto_request = self.__get_url(f"{self.base_url}{download_link}")
+
+        if alto_request.status_code != 200:
+            return None
+
+        return alto_request.content
+
+    def upload_part_alto_transcription(
+        self,
+        document_pk: int,
+        part_pk: int,
+        transcription_name: str,
+        filename: str,
+        file_data: BufferedReader,
+    ):
+        return self.__post_url(
+            f"{self.api_url}documents/{document_pk}/imports/",
+            {
+                "task": "import-xml",
+                "name": transcription_name,
+                "document": document_pk,
+                "parts": part_pk,
+            },
+            {"upload_file": (filename, file_data)},
+        )
+
     def get_document_part_lines(self, doc_pk: int, part_pk: int):
         r = self.__get_url(f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/")
-        return r.json()
+        line_info = r.json()
+        lines = line_info["results"]
+        while line_info["next"] is not None:
+            r = self.__get_url(line_info["next"])
+            line_info = r.json()
+            lines = lines + line_info["results"]
+
+        return lines
+
+    def delete_document_part_line(self, doc_pk: int, part_pk: int, line_pk: int):
+        r = self.__delete_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}"
+        )
+        return r
 
     def get_document_images(self, document_pk: int):
         r = self.__get_url(f"{self.api_url}documents/{document_pk}/parts/")
