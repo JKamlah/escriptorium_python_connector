@@ -120,12 +120,21 @@ class EscriptoriumConnector:
         return region[0] if region else None
 
     def get_document_part_line_transcription(
+        self, doc_pk: int, part_pk: int, line_pk: int, line_transcription_pk: int
+    ):
+        transcriptions = self.get_document_part_line_transcriptions(
+            doc_pk, part_pk, line_pk
+        )
+        transcription = [x for x in transcriptions if x["pk"] == line_transcription_pk]
+        return transcription[0] if transcription else None
+
+    def get_document_part_line_transcription_by_transcription(
         self, doc_pk: int, part_pk: int, line_pk: int, transcription_pk: int
     ):
         transcriptions = self.get_document_part_line_transcriptions(
             doc_pk, part_pk, line_pk
         )
-        transcription = [x for x in transcriptions if x["pk"] == transcription_pk]
+        transcription = [x for x in transcriptions if x["transcription"] == transcription_pk]
         return transcription[0] if transcription else None
 
     def get_document_part_line_transcriptions(
