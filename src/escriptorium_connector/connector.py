@@ -1,6 +1,5 @@
 from io import BufferedReader
 from typing import Union
-from numpy import int0
 import requests
 import logging
 import backoff
