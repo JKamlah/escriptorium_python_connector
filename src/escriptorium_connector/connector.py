@@ -224,7 +224,7 @@ class EscriptoriumConnector:
     def download_part_alto_transcription(
         self,
         document_pk: int,
-        part_pk: int,
+        part_pk: Union[list[int], int],
         transcription_pk: int,
     ) -> Union[list[bytes], None]:
         return self.__download_part_output_transcription(
@@ -234,7 +234,7 @@ class EscriptoriumConnector:
     def download_part_pagexml_transcription(
         self,
         document_pk: int,
-        part_pk: int,
+        part_pk: Union[list[int], int],
         transcription_pk: int,
     ) -> Union[list[bytes], None]:
         return self.__download_part_output_transcription(
@@ -244,7 +244,7 @@ class EscriptoriumConnector:
     def download_part_text_transcription(
         self,
         document_pk: int,
-        part_pk: int,
+        part_pk: Union[list[int], int],
         transcription_pk: int,
     ) -> Union[list[bytes], None]:
         return self.__download_part_output_transcription(
@@ -254,7 +254,7 @@ class EscriptoriumConnector:
     def __download_part_output_transcription(
         self,
         document_pk: int,
-        part_pk: int,
+        part_pk: Union[list[int], int],
         transcription_pk: int,
         output_type: str,
     ) -> Union[list[bytes], None]:
