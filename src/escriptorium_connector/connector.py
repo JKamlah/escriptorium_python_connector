@@ -1,10 +1,12 @@
-from io import BufferedReader
-from typing import Union
+from io import BufferedReader, BytesIO
+from typing import Any, Union
+from lxml import html
 import requests
 import logging
 import backoff
 import websocket
 import json
+import zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +16,46 @@ class EscriptoriumConnector:
         self,
         base_url: str,
         api_url: str,
-        token: str,
-        cookie: str = None,
+        username: str,
+        password: str,
         project: str = None,
     ):
         # Make sure the urls terminates with a front slash
         self.api_url = api_url if api_url[-1] == "/" else api_url + "/"
         self.base_url = base_url if base_url[-1] == "/" else base_url + "/"
 
-        self.headers = {"Accept": "application/json", "Authorization": f"Token {token}"}
+        self.headers = {"Accept": "application/json"}
         self.project = project
-        self.cookie = cookie
+
+        self.session_requests = requests.session()
+        login_url = f"""{self.base_url}login/"""
+        result = self.session_requests.get(login_url)
+        tree = html.fromstring(result.text)
+        authenticity_token = list(
+            set(tree.xpath("//input[@name='csrfmiddlewaretoken']/@value"))
+        )[0]
+        payload = {
+            "username": username,
+            "password": password,
+            "csrfmiddlewaretoken": authenticity_token,
+        }
+        result = self.session_requests.post(
+            login_url, data=payload, headers={**self.headers, "referer": login_url}
+        )
+        self.cookie = "; ".join(
+            [
+                f"""{k}={v}"""
+                for k, v in self.session_requests.cookies.get_dict().items()
+            ]
+        )
+        result = self.session_requests.get(
+            self.base_url + "profile/apikey/", headers=self.headers
+        )
+        tree = html.fromstring(result.text)
+        api_key = list(set(tree.xpath("//button[@id='api-key-clipboard']/@data-key")))[
+            0
+        ]
+        self.headers["Authorization"] = f"""Token {api_key}"""
 
     def __on_message(self, ws, message):
         logging.debug(message)
@@ -167,12 +198,66 @@ class EscriptoriumConnector:
         r = self.__get_url(f"{self.api_url}documents/{doc_pk}/transcriptions/")
         return r.json()
 
+    def create_document_line_transcription(
+        self,
+        doc_pk: int,
+        parts_pk: int,
+        line_pk: int,
+        transcription_pk: int,
+        transcription_content: str,
+        graphs: Union[Any, None],
+    ):
+        # Do I need a "transcription" field too? I don't know what it means.
+        payload = {
+            "pk": transcription_pk,
+            "line": line_pk,
+            "content": transcription_content,
+        }
+        if graphs is not None:
+            payload["graphs"] = graphs
+        r = self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{parts_pk}/transcriptions/",
+            payload,
+        )
+        return r.json()
+
     def download_part_alto_transcription(
         self,
         document_pk: int,
         part_pk: int,
         transcription_pk: int,
-    ) -> Union[bytes, None]:
+    ) -> Union[list[bytes], None]:
+        return self.__download_part_output_transcription(
+            document_pk, part_pk, transcription_pk, "alto"
+        )
+
+    def download_part_pagexml_transcription(
+        self,
+        document_pk: int,
+        part_pk: int,
+        transcription_pk: int,
+    ) -> Union[list[bytes], None]:
+        return self.__download_part_output_transcription(
+            document_pk, part_pk, transcription_pk, "pagexml"
+        )
+
+    def download_part_text_transcription(
+        self,
+        document_pk: int,
+        part_pk: int,
+        transcription_pk: int,
+    ) -> Union[list[bytes], None]:
+        return self.__download_part_output_transcription(
+            document_pk, part_pk, transcription_pk, "text"
+        )
+
+    def __download_part_output_transcription(
+        self,
+        document_pk: int,
+        part_pk: int,
+        transcription_pk: int,
+        output_type: str,
+    ) -> Union[list[bytes], None]:
         if self.cookie is None:
             raise Exception("Must use websockets to download ALTO exports")
 
@@ -188,7 +273,7 @@ class EscriptoriumConnector:
                 "document": document_pk,
                 "parts": part_pk,
                 "transcription": transcription_pk,
-                "file_format": "alto",
+                "file_format": output_type,
             },
         )
 
@@ -206,15 +291,15 @@ class EscriptoriumConnector:
                 f"Did not receive a link to download ALTO export for {document_pk}, {part_pk}, {transcription_pk}"
             )
             return None
-
         alto_request = self.__get_url(f"{self.base_url}{download_link}")
 
         if alto_request.status_code != 200:
             return None
 
-        return alto_request.content
+        zip = zipfile.ZipFile(BytesIO(alto_request.content))
+        return [zip.read(x) for x in zip.infolist()]
 
-    def upload_part_alto_transcription(
+    def upload_part_transcription(
         self,
         document_pk: int,
         part_pk: int,
@@ -222,6 +307,19 @@ class EscriptoriumConnector:
         filename: str,
         file_data: BufferedReader,
     ):
+        """Upload a txt, PageXML, or ALTO file.
+
+        Args:
+            document_pk (int): Document PK
+            part_pk (int): Part PK
+            transcription_name (str): Transcription name
+            filename (str): Filename
+            file_data (BufferedReader): File data as a BufferedReader
+
+        Returns:
+            null: Nothing
+        """
+
         return self.__post_url(
             f"{self.api_url}documents/{document_pk}/imports/",
             {
@@ -244,10 +342,76 @@ class EscriptoriumConnector:
 
         return lines
 
+    def create_document_part_line(self, doc_pk: int, part_pk: int, new_line: object):
+        r = self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/", new_line
+        )
+        return r
+
     def delete_document_part_line(self, doc_pk: int, part_pk: int, line_pk: int):
         r = self.__delete_url(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}"
         )
+        return r
+
+    def get_document_part_transcriptions(self, doc_pk: int, part_pk: int):
+        get_url = f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/"
+        r = self.__get_url(get_url)
+        transcriptions_info = r.json()
+        transcriptions = transcriptions_info["results"]
+        while transcriptions_info["next"] is not None:
+            r = self.__get_url(transcriptions_info["next"])
+            transcriptions_info = r.json()
+            transcriptions = transcriptions + transcriptions_info["results"]
+        return transcriptions
+
+    def create_document_part_transcription(
+        self, doc_pk: int, part_pk: int, transcription: object
+    ):
+        r = self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/",
+            transcription,
+        )
+        return r
+
+    def create_document_part_region(self, doc_pk: int, part_pk: int, region: object):
+        if not isinstance(region["box"], str):
+            region["box"] = json.dumps(region["box"])
+
+        r = self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/blocks/",
+            region,
+        )
+        return r
+
+    def get_line_types(self):
+        r = self.__get_url(f"{self.api_url}types/line/")
+        line_type_info = r.json()
+        line_types = line_type_info["results"]
+        while line_type_info["next"] is not None:
+            r = self.__get_url(line_type_info["next"])
+            line_type_info = r.json()
+            line_types = line_types + line_type_info["results"]
+
+        return line_types
+
+    def create_line_type(self, line_type: object):
+        r = self.__post_url(f"{self.api_url}types/line/", line_type)
+        return r
+
+    def get_region_types(self):
+        r = self.__get_url(f"{self.api_url}types/block/")
+        block_type_info = r.json()
+        block_types = block_type_info["results"]
+        while block_type_info["next"] is not None:
+            r = self.__get_url(block_type_info["next"])
+            block_type_info = r.json()
+            block_types = block_types + block_type_info["results"]
+
+        return block_types
+
+    def create_region_type(self, region_type: object):
+        r = self.__post_url(f"{self.api_url}types/block/", region_type)
         return r
 
     def get_document_images(self, document_pk: int):
