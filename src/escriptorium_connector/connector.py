@@ -6,7 +6,6 @@ import logging
 import backoff
 import websocket
 import json
-import zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -226,7 +225,20 @@ class EscriptoriumConnector:
         document_pk: int,
         part_pk: Union[list[int], int],
         transcription_pk: int,
-    ) -> Union[list[bytes], None]:
+    ) -> Union[bytes, None]:
+        """Download one or more ALTO/XML files from the document.
+
+        Args:
+            document_pk (int): Desired document
+            part_pk (Union[list[int], int]): Desired document part or parts
+            transcription_pk (int): The desired transcription
+
+        Returns:
+            Union[bytes, None]: The response is None if the XML could not be downloaded.
+            Otherwise it is a bytes object with the contents of the downloaded zip file.
+            You will need to unzip these bytes in order to access the XML data (zipfile can do this).
+        """
+
         return self.__download_part_output_transcription(
             document_pk, part_pk, transcription_pk, "alto"
         )
@@ -236,7 +248,20 @@ class EscriptoriumConnector:
         document_pk: int,
         part_pk: Union[list[int], int],
         transcription_pk: int,
-    ) -> Union[list[bytes], None]:
+    ) -> Union[bytes, None]:
+        """Download one or more PageXML files from the document.
+
+        Args:
+            document_pk (int): Desired document
+            part_pk (Union[list[int], int]): Desired document part or parts
+            transcription_pk (int): The desired transcription
+
+        Returns:
+            Union[bytes, None]: The response is None if the XML could not be downloaded.
+            Otherwise it is a bytes object with the contents of the downloaded zip file.
+            You will need to unzip these bytes in order to access the XML data (zipfile can do this).
+        """
+
         return self.__download_part_output_transcription(
             document_pk, part_pk, transcription_pk, "pagexml"
         )
@@ -246,7 +271,20 @@ class EscriptoriumConnector:
         document_pk: int,
         part_pk: Union[list[int], int],
         transcription_pk: int,
-    ) -> Union[list[bytes], None]:
+    ) -> Union[bytes, None]:
+        """Download one or more TXT files from the document.
+
+        Args:
+            document_pk (int): Desired document
+            part_pk (Union[list[int], int]): Desired document part or parts
+            transcription_pk (int): The desired transcription
+
+        Returns:
+            Union[bytes, None]: The response is None if the XML could not be downloaded.
+            Otherwise it is a bytes object with the contents of the downloaded zip file.
+            You will need to unzip these bytes in order to access the XML data (zipfile can do this).
+        """
+
         return self.__download_part_output_transcription(
             document_pk, part_pk, transcription_pk, "text"
         )
@@ -257,7 +295,7 @@ class EscriptoriumConnector:
         part_pk: Union[list[int], int],
         transcription_pk: int,
         output_type: str,
-    ) -> Union[list[bytes], None]:
+    ) -> Union[bytes, None]:
         if self.cookie is None:
             raise Exception("Must use websockets to download ALTO exports")
 
@@ -296,8 +334,7 @@ class EscriptoriumConnector:
         if alto_request.status_code != 200:
             return None
 
-        zip = zipfile.ZipFile(BytesIO(alto_request.content))
-        return [zip.read(x) for x in zip.infolist()]
+        return alto_request.content
 
     def upload_part_transcription(
         self,

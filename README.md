@@ -40,4 +40,4 @@ ESCRIPTORIUM_USERNAME=your escriptorium username
 ESCRIPTORIUM_PASSWORD=your escriptorium password
 ```
 
-See [this Jupyter notebook](./example.ipynb) for a longer introduction to the connector.
+See [this Jupyter notebook](https://gitlab.com/sofer_mahir/escriptorium_python_connector/-/blob/main/example.ipynb) for a longer introduction to the connector.
