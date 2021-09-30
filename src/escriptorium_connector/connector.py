@@ -339,7 +339,7 @@ class EscriptoriumConnector:
     def upload_part_transcription(
         self,
         document_pk: int,
-        part_pk: int,
+        part_pk: Union[list[int],int],
         transcription_name: str,
         filename: str,
         file_data: BufferedReader,
