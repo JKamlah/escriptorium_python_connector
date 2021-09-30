@@ -206,10 +206,9 @@ class EscriptoriumConnector:
         transcription_content: str,
         graphs: Union[Any, None],
     ):
-        # Do I need a "transcription" field too? I don't know what it means.
         payload = {
-            "pk": transcription_pk,
             "line": line_pk,
+            "transcription": transcription_pk,
             "content": transcription_content,
         }
         if graphs is not None:
@@ -339,7 +338,7 @@ class EscriptoriumConnector:
     def upload_part_transcription(
         self,
         document_pk: int,
-        part_pk: Union[list[int],int],
+        part_pk: Union[list[int], int],
         transcription_name: str,
         filename: str,
         file_data: BufferedReader,
