@@ -343,6 +343,7 @@ class EscriptoriumConnector:
         transcription_name: str,
         filename: str,
         file_data: BufferedReader,
+        override: str = "off",
     ):
         """Upload a txt, PageXML, or ALTO file.
 
@@ -352,6 +353,7 @@ class EscriptoriumConnector:
             transcription_name (str): Transcription name
             filename (str): Filename
             file_data (BufferedReader): File data as a BufferedReader
+            override (str): Whether to override existing segmentation data ("on") or not ("off", default)
 
         Returns:
             null: Nothing
@@ -364,6 +366,7 @@ class EscriptoriumConnector:
                 "name": transcription_name,
                 "document": document_pk,
                 "parts": part_pk,
+                "override": override,
             },
             {"upload_file": (filename, file_data)},
         )
