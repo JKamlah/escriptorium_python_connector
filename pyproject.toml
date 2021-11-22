@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "escriptorium-connector"
-version = "0.0.14"
+version = "0.0.15"
 description = "This simple python package makes it easy to connect to an eScriptorium instance and to work with the data there."
 authors = ["Bronson Brown-deVost <bronsonbdevost@gmail.com>"]
 license = "MIT"
@@ -14,10 +14,11 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.26.0"
-backoff = "^1.11.1"
 websocket-client = "^1.2.1"
+lxml = "^4.6.4"
 
 [tool.poetry.dev-dependencies]
+python-dotenv = "^0.19.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

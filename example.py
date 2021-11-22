@@ -3,10 +3,13 @@ import os
 from dotenv import load_dotenv
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     load_dotenv()
-    url = str(os.getenv('ESCRIPTORIUM_URL'))
-    api = f'{url}api/'
-    token = str(os.getenv('ESCRIPTORIUM_TOKEN'))
-    escr = EscriptoriumConnector(url, api, token)
-    print(escr.get_documents())
+    source_url = str(os.getenv("ESCRIPTORIUM_URL"))
+    source_api = f"{source_url}api/"
+    username = str(os.getenv("ESCRIPTORIUM_USERNAME"))
+    password = str(os.getenv("ESCRIPTORIUM_PASSWORD"))
+    project = str(os.getenv("ESCRIPTORIUM_PROJECT"))
+    source = EscriptoriumConnector(source_url, source_api, username, password, project)
+    print(source.get_documents())
+    print(source.http.headers)

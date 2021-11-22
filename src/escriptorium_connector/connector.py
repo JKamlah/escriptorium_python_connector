@@ -1,11 +1,34 @@
-from io import BufferedReader, BytesIO
+from io import BytesIO
 from typing import Any, Union
 from lxml import html
 import requests
+from requests.packages.urllib3.util.retry import Retry
 import logging
-import backoff
 import websocket
 import json
+
+
+# Default timeouts for http requests
+# See https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/
+from requests.adapters import HTTPAdapter
+
+DEFAULT_HTTP_TIMEOUT = 5  # seconds
+
+
+class TimeoutHTTPAdapter(HTTPAdapter):
+    def __init__(self, *args, **kwargs):
+        self.timeout = DEFAULT_HTTP_TIMEOUT
+        if "timeout" in kwargs:
+            self.timeout = kwargs["timeout"]
+            del kwargs["timeout"]
+        super().__init__(*args, **kwargs)
+
+    def send(self, request, **kwargs):
+        timeout = kwargs.get("timeout")
+        if timeout is None:
+            kwargs["timeout"] = self.timeout
+        return super().send(request, **kwargs)
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,43 +42,64 @@ class EscriptoriumConnector:
         password: str,
         project: str = None,
     ):
+        # Setup retries and timeouts for HTTP requests
+        retry_strategy = Retry(
+            total=5,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=[
+                "HEAD",
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+                "TRACE",
+            ],
+            backoff_factor=1,
+        )
+        adapter = TimeoutHTTPAdapter(max_retries=retry_strategy)
+        assert_status_hook = (
+            lambda response, *args, **kwargs: response.raise_for_status()
+        )
+        self.http = requests.Session()
+        self.http.hooks["response"] = [assert_status_hook]
+        self.http.mount("https://", adapter)
+        self.http.mount("http://", adapter)
+
         # Make sure the urls terminates with a front slash
         self.api_url = api_url if api_url[-1] == "/" else api_url + "/"
         self.base_url = base_url if base_url[-1] == "/" else base_url + "/"
 
-        self.headers = {"Accept": "application/json"}
-        self.project = project
+        self.http.headers.update({"Accept": "application/json"})
 
-        self.session_requests = requests.session()
         login_url = f"""{self.base_url}login/"""
-        result = self.session_requests.get(login_url)
+        result = self.http.get(login_url)
         tree = html.fromstring(result.text)
-        authenticity_token = list(
+        self.csrfmiddlewaretoken = list(
             set(tree.xpath("//input[@name='csrfmiddlewaretoken']/@value"))
         )[0]
         payload = {
             "username": username,
             "password": password,
-            "csrfmiddlewaretoken": authenticity_token,
+            "csrfmiddlewaretoken": self.csrfmiddlewaretoken,
         }
-        result = self.session_requests.post(
-            login_url, data=payload, headers={**self.headers, "referer": login_url}
+        result = self.http.post(
+            login_url, data=payload, headers={**self.http.headers, "referer": login_url}
         )
         self.cookie = "; ".join(
-            [
-                f"""{k}={v}"""
-                for k, v in self.session_requests.cookies.get_dict().items()
-            ]
+            [f"""{k}={v}""" for k, v in self.http.cookies.get_dict().items()]
         )
-        result = self.session_requests.get(
-            self.base_url + "profile/apikey/", headers=self.headers
-        )
+        result = self.http.get(self.base_url + "profile/apikey/")
         tree = html.fromstring(result.text)
         api_key = list(set(tree.xpath("//button[@id='api-key-clipboard']/@data-key")))[
             0
         ]
-        self.headers["Authorization"] = f"""Token {api_key}"""
+        self.http.headers.update({"Authorization": f"""Token {api_key}"""})
 
+        self.project_name = project
+        self.project = self.get_project_pk_by_name(self.project_name)
+
+    # Start websocket methods (probably not needed)
     def __on_message(self, ws, message):
         logging.debug(message)
 
@@ -70,51 +114,67 @@ class EscriptoriumConnector:
     def __on_open(self, ws):
         logging.debug("### websocket opened ###")
 
-        # def run(*args):
-        #     for i in range(3):
-        #         time.sleep(1)
-        #         ws.send("Hello %d" % i)
-        #     time.sleep(1)
-        #     ws.close()
-        #     print("thread terminating...")
+    # End websocket methods (probably not needed)
 
-        # thread.start_new_thread(run, ())
-
-    @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
+    # Start http methods
     def __get_url(self, url: str) -> requests.Response:
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        return r
+        return self.http.get(url)
 
-    @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
     def __post_url(
         self, url: str, payload: object, files: object = None
     ) -> requests.Response:
-        r = (
-            requests.post(url, data=payload, files=files, headers=self.headers)
+        return (
+            self.http.post(url, data=payload, files=files)
             if files is not None
-            else requests.post(url, data=payload, headers=self.headers)
+            else self.http.post(url, data=payload)
         )
-        r.raise_for_status()
-        return r
 
-    @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
     def __put_url(
         self, url: str, payload: object, files: object = None
     ) -> requests.Response:
-        r = (
-            requests.put(url, data=payload, files=files, headers=self.headers)
+        return (
+            self.http.put(url, data=payload, files=files)
             if files is not None
-            else requests.put(url, data=payload, headers=self.headers)
+            else self.http.put(url, data=payload)
         )
-        r.raise_for_status()
-        return r
 
-    @backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=60)
     def __delete_url(self, url: str) -> requests.Response:
-        r = requests.delete(url, headers=self.headers)
-        r.raise_for_status()
-        return r
+        return self.http.delete(url)
+
+    # End http methods
+
+    def set_connector_project_by_name(self, project_name: str):
+        self.project_name = project_name
+        self.project = self.get_project_pk_by_name(self.project_name)
+
+    def set_connector_project_by_pk(self, project_pk: int):
+        self.project = project_pk
+        self.project_name = self.get_project(self.project)["name"]
+
+    def get_projects(self):
+        r = self.__get_url(f"{self.api_url}projects/")
+        info = r.json()
+        documents = info["results"]
+        while info["next"] is not None:
+            r = self.__get_url(info["next"])
+            info = r.json()
+            documents = documents + info["results"]
+
+        return documents
+
+    def get_project(self, pk: int):
+        r = self.__get_url(f"{self.api_url}projects/{pk}")
+        return r.json()
+
+    def get_project_pk_by_name(
+        self, project_name: Union[str, None]
+    ) -> Union[int, None]:
+        if project_name is None or project_name == "":
+            return None
+
+        all_projects = self.get_projects()
+        matching_projects = [x for x in all_projects if x["name"] == project_name]
+        return matching_projects[0]["id"] if matching_projects else None
 
     def get_documents(self):
         r = self.__get_url(f"{self.api_url}documents/")
@@ -307,10 +367,14 @@ class EscriptoriumConnector:
             f"{self.api_url}documents/{document_pk}/export/",
             {
                 "task": "export",
-                "document": document_pk,
-                "parts": part_pk,
+                "csrfmiddlewaretoken": self.csrfmiddlewaretoken,
                 "transcription": transcription_pk,
                 "file_format": output_type,
+                "region_types": [
+                    x["pk"] for x in self.get_document_region_types(document_pk)
+                ],
+                "document": document_pk,
+                "parts": part_pk,
             },
         )
 
@@ -338,35 +402,31 @@ class EscriptoriumConnector:
     def upload_part_transcription(
         self,
         document_pk: int,
-        part_pk: Union[list[int], int],
         transcription_name: str,
         filename: str,
-        file_data: BufferedReader,
+        file_data: BytesIO,
         override: str = "off",
     ):
         """Upload a txt, PageXML, or ALTO file.
 
         Args:
             document_pk (int): Document PK
-            part_pk (int): Part PK
             transcription_name (str): Transcription name
             filename (str): Filename
-            file_data (BufferedReader): File data as a BufferedReader
+            file_data (BytesIO): File data as a BytesIO
             override (str): Whether to override existing segmentation data ("on") or not ("off", default)
 
         Returns:
             null: Nothing
         """
 
+        request_payload = {"task": "import-xml", "name": transcription_name}
+        if override == "on":
+            request_payload["override"] = "on"
+
         return self.__post_url(
             f"{self.api_url}documents/{document_pk}/imports/",
-            {
-                "task": "import-xml",
-                "name": transcription_name,
-                "document": document_pk,
-                "parts": part_pk,
-                "override": override,
-            },
+            request_payload,
             {"upload_file": (filename, file_data)},
         )
 
@@ -449,6 +509,14 @@ class EscriptoriumConnector:
 
         return block_types
 
+    def get_document_region_types(self, document_pk: int) -> list[dict[str, int]]:
+        global_region_types = self.get_region_types()
+        global_region_ids = set([x["pk"] for x in global_region_types])
+        doc_data = self.get_document(document_pk)
+        return [
+            x for x in doc_data["valid_block_types"] if x["pk"] not in global_region_ids
+        ] + global_region_types
+
     def create_region_type(self, region_type: object):
         r = self.__post_url(f"{self.api_url}types/block/", region_type)
         return r
@@ -475,6 +543,15 @@ class EscriptoriumConnector:
         r = self.__get_url(f"{self.base_url}{img_url}")
         return r.content
 
+    def create_project(self, project_data: object):
+        return self.__post_url(f"{self.api_url}projects/", project_data)
+
+    def update_project(self, project_data: object):
+        return self.__put_url(f"{self.api_url}projects/", project_data)
+
+    def delete_project(self, project_pk: int):
+        return self.__delete_url(f"{self.api_url}projects/{project_pk}")
+
     def create_document(self, doc_data: object):
         if self.project:
             doc_data["project"] = self.project
@@ -489,10 +566,22 @@ class EscriptoriumConnector:
             {"image": (image_data_info["filename"], image_data)},
         )
 
+    def verify_project_exists(self, project_pk):
+        try:
+            self.get_project(project_pk)
+            return True
+        except:
+            return False
+
 
 if __name__ == "__main__":
-    source_url = "https://www.escriptorium.fr/"
+    import os
+    from dotenv import load_dotenv
+
+    source_url = str(os.getenv("ESCRIPTORIUM_URL"))
     source_api = f"{source_url}api/"
-    source_token = ""
-    source = EscriptoriumConnector(source_url, source_api, source_token)
+    username = str(os.getenv("ESCRIPTORIUM_USERNAME"))
+    password = str(os.getenv("ESCRIPTORIUM_PASSWORD"))
+    project = str(os.getenv("ESCRIPTORIUM_PROJECT"))
+    source = EscriptoriumConnector(source_url, source_api, username, password, project)
     print(source.get_documents())
