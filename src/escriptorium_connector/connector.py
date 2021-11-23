@@ -553,8 +553,10 @@ class EscriptoriumConnector:
         return self.__delete_url(f"{self.api_url}projects/{project_pk}")
 
     def create_document(self, doc_data: object):
-        if self.project:
-            doc_data["project"] = self.project
+        if self.project_name and (
+            "project_name" not in doc_data or doc_data["project_name"] == ""
+        ):
+            doc_data["project"] = self.project_name
         return self.__post_url(f"{self.api_url}documents/", doc_data)
 
     def create_image(
