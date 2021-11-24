@@ -510,12 +510,8 @@ class EscriptoriumConnector:
         return block_types
 
     def get_document_region_types(self, document_pk: int) -> list[dict[str, int]]:
-        global_region_types = self.get_region_types()
-        global_region_ids = set([x["pk"] for x in global_region_types])
         doc_data = self.get_document(document_pk)
-        return [
-            x for x in doc_data["valid_block_types"] if x["pk"] not in global_region_ids
-        ] + global_region_types
+        return [x for x in doc_data["valid_block_types"]]
 
     def create_region_type(self, region_type: object):
         r = self.__post_url(f"{self.api_url}types/block/", region_type)
