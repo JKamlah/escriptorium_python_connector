@@ -1,0 +1,4853 @@
+openapi: 3.0.3
+info:
+  title: eScriptorium API
+  version: 1.0.0
+  description: HTR Document Analysis Platform
+paths:
+  /api/documents/:
+    get:
+      operationId: documents_retrieve
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: documents_create
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/documents/{document_pk}/parts/:
+    get:
+      operationId: documents_parts_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPartList'
+          description: ''
+    post:
+      operationId: documents_parts_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/annotations/image/:
+    get:
+      operationId: documents_parts_annotations_image_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedImageAnnotationList'
+          description: ''
+    post:
+      operationId: documents_parts_annotations_image_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageAnnotation'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/annotations/image/{id}/:
+    get:
+      operationId: documents_parts_annotations_image_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this image annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageAnnotation'
+          description: ''
+    put:
+      operationId: documents_parts_annotations_image_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this image annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImageAnnotation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageAnnotation'
+          description: ''
+    patch:
+      operationId: documents_parts_annotations_image_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this image annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedImageAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedImageAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedImageAnnotation'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageAnnotation'
+          description: ''
+    delete:
+      operationId: documents_parts_annotations_image_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this image annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/annotations/text/:
+    get:
+      operationId: documents_parts_annotations_text_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTextAnnotationList'
+          description: ''
+    post:
+      operationId: documents_parts_annotations_text_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextAnnotation'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/annotations/text/{id}/:
+    get:
+      operationId: documents_parts_annotations_text_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this text annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextAnnotation'
+          description: ''
+    put:
+      operationId: documents_parts_annotations_text_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this text annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TextAnnotation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextAnnotation'
+          description: ''
+    patch:
+      operationId: documents_parts_annotations_text_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this text annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTextAnnotation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTextAnnotation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTextAnnotation'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextAnnotation'
+          description: ''
+    delete:
+      operationId: documents_parts_annotations_text_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this text annotation.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/blocks/:
+    get:
+      operationId: documents_parts_blocks_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBlockList'
+          description: ''
+    post:
+      operationId: documents_parts_blocks_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Block'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Block'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Block'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/blocks/{id}/:
+    get:
+      operationId: documents_parts_blocks_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+          description: ''
+    put:
+      operationId: documents_parts_blocks_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Block'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Block'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Block'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+          description: ''
+    patch:
+      operationId: documents_parts_blocks_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBlock'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBlock'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBlock'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+          description: ''
+    delete:
+      operationId: documents_parts_blocks_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/lines/:
+    get:
+      operationId: documents_parts_lines_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLineList'
+          description: ''
+    post:
+      operationId: documents_parts_lines_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/lines/{id}/:
+    get:
+      operationId: documents_parts_lines_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedLine'
+          description: ''
+    put:
+      operationId: documents_parts_lines_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+    patch:
+      operationId: documents_parts_lines_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+    delete:
+      operationId: documents_parts_lines_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/lines/bulk_create/:
+    post:
+      operationId: documents_parts_lines_bulk_create_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/lines/bulk_delete/:
+    post:
+      operationId: documents_parts_lines_bulk_delete_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/lines/bulk_update/:
+    put:
+      operationId: documents_parts_lines_bulk_update_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/lines/move/:
+    post:
+      operationId: documents_parts_lines_move_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/documents/{document_pk}/parts/{part_pk}/transcriptions/:
+    get:
+      operationId: documents_parts_transcriptions_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: documents_parts_transcriptions_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/transcriptions/{id}/:
+    get:
+      operationId: documents_parts_transcriptions_retrieve_2
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line transcription.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: documents_parts_transcriptions_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line transcription.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: documents_parts_transcriptions_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line transcription.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: documents_parts_transcriptions_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line transcription.
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/transcriptions/bulk_create/:
+    post:
+      operationId: documents_parts_transcriptions_bulk_create_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/transcriptions/bulk_delete/:
+    post:
+      operationId: documents_parts_transcriptions_bulk_delete_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{document_pk}/parts/{part_pk}/transcriptions/bulk_update/:
+    put:
+      operationId: documents_parts_transcriptions_bulk_update_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: part_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{document_pk}/parts/{id}/:
+    get:
+      operationId: documents_parts_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartDetail'
+          description: ''
+    put:
+      operationId: documents_parts_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+    patch:
+      operationId: documents_parts_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPart'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPart'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+    delete:
+      operationId: documents_parts_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/parts/{id}/cancel/:
+    post:
+      operationId: documents_parts_cancel_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{id}/crop/:
+    post:
+      operationId: documents_parts_crop_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{id}/move/:
+    post:
+      operationId: documents_parts_move_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{id}/recalculate_ordering/:
+    post:
+      operationId: documents_parts_recalculate_ordering_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{id}/reset_masks/:
+    post:
+      operationId: documents_parts_reset_masks_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/{id}/rotate/:
+    post:
+      operationId: documents_parts_rotate_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document part.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Part'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Part'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Part'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/parts/byorder/:
+    get:
+      operationId: documents_parts_byorder_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+          description: ''
+  /api/documents/{document_pk}/taxonomies/annotations/:
+    get:
+      operationId: documents_taxonomies_annotations_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAnnotationTaxonomyList'
+          description: ''
+    post:
+      operationId: documents_taxonomies_annotations_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaxonomy'
+          description: ''
+  /api/documents/{document_pk}/taxonomies/annotations/{id}/:
+    get:
+      operationId: documents_taxonomies_annotations_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation taxonomy.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaxonomy'
+          description: ''
+    put:
+      operationId: documents_taxonomies_annotations_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation taxonomy.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnotationTaxonomy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaxonomy'
+          description: ''
+    patch:
+      operationId: documents_taxonomies_annotations_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation taxonomy.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationTaxonomy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationTaxonomy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationTaxonomy'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaxonomy'
+          description: ''
+    delete:
+      operationId: documents_taxonomies_annotations_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation taxonomy.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{document_pk}/transcriptions/:
+    get:
+      operationId: documents_transcriptions_list
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transcription'
+          description: ''
+    post:
+      operationId: documents_transcriptions_create
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcription'
+          description: ''
+  /api/documents/{document_pk}/transcriptions/{id}/:
+    get:
+      operationId: documents_transcriptions_retrieve
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transcription.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcription'
+          description: ''
+    put:
+      operationId: documents_transcriptions_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transcription.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Transcription'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcription'
+          description: ''
+    patch:
+      operationId: documents_transcriptions_partial_update
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transcription.
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTranscription'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTranscription'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTranscription'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcription'
+          description: ''
+    delete:
+      operationId: documents_transcriptions_destroy
+      parameters:
+      - in: path
+        name: document_pk
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transcription.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{id}/:
+    get:
+      operationId: documents_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: documents_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: documents_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: documents_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{id}/cancel_import/:
+    post:
+      operationId: documents_cancel_import_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/cancel_training/:
+    post:
+      operationId: documents_cancel_training_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/export/:
+    post:
+      operationId: documents_export_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/imports/:
+    post:
+      operationId: documents_imports_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/segment/:
+    post:
+      operationId: documents_segment_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/segtrain/:
+    post:
+      operationId: documents_segtrain_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/train/:
+    post:
+      operationId: documents_train_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/transcribe/:
+    post:
+      operationId: documents_transcribe_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document.
+        required: true
+      tags:
+      - documents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/models/:
+    get:
+      operationId: models_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - models
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOcrModelList'
+          description: ''
+    post:
+      operationId: models_create
+      tags:
+      - models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrModel'
+          description: ''
+  /api/models/{id}/:
+    get:
+      operationId: models_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ocr model.
+        required: true
+      tags:
+      - models
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrModel'
+          description: ''
+    put:
+      operationId: models_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ocr model.
+        required: true
+      tags:
+      - models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrModel'
+          description: ''
+    patch:
+      operationId: models_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ocr model.
+        required: true
+      tags:
+      - models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOcrModel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOcrModel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOcrModel'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrModel'
+          description: ''
+    delete:
+      operationId: models_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ocr model.
+        required: true
+      tags:
+      - models
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/models/{id}/cancel_training/:
+    post:
+      operationId: models_cancel_training_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ocr model.
+        required: true
+      tags:
+      - models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OcrModel'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcrModel'
+          description: ''
+  /api/projects/:
+    get:
+      operationId: projects_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjectList'
+          description: ''
+    post:
+      operationId: projects_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/{id}/:
+    get:
+      operationId: projects_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    put:
+      operationId: projects_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    patch:
+      operationId: projects_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    delete:
+      operationId: projects_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/{project_pk}/tags/:
+    get:
+      operationId: projects_tags_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTagDocumentList'
+          description: ''
+    post:
+      operationId: projects_tags_create
+      parameters:
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDocument'
+          description: ''
+  /api/projects/{project_pk}/tags/{id}/:
+    get:
+      operationId: projects_tags_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document tag.
+        required: true
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDocument'
+          description: ''
+    put:
+      operationId: projects_tags_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document tag.
+        required: true
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TagDocument'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDocument'
+          description: ''
+    patch:
+      operationId: projects_tags_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document tag.
+        required: true
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTagDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTagDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTagDocument'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDocument'
+          description: ''
+    delete:
+      operationId: projects_tags_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this document tag.
+        required: true
+      - in: path
+        name: project_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/schema/escriptorium.yaml:
+    get:
+      operationId: schema_escriptorium.yaml_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - de
+          - en
+      tags:
+      - schema
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/scripts/:
+    get:
+      operationId: scripts_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - scripts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedScriptList'
+          description: ''
+  /api/scripts/{id}/:
+    get:
+      operationId: scripts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this script.
+        required: true
+      tags:
+      - scripts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+          description: ''
+  /api/token-auth/:
+    post:
+      operationId: token_auth_create
+      tags:
+      - token-auth
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+          description: ''
+  /api/types/annotations/:
+    get:
+      operationId: types_annotations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAnnotationTypeList'
+          description: ''
+    post:
+      operationId: types_annotations_create
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationType'
+          description: ''
+  /api/types/annotations/{id}/:
+    get:
+      operationId: types_annotations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationType'
+          description: ''
+    put:
+      operationId: types_annotations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnotationType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationType'
+          description: ''
+    patch:
+      operationId: types_annotations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAnnotationType'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationType'
+          description: ''
+    delete:
+      operationId: types_annotations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this annotation type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/types/block/:
+    get:
+      operationId: types_block_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBlockTypeList'
+          description: ''
+    post:
+      operationId: types_block_create
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockType'
+          description: ''
+  /api/types/block/{id}/:
+    get:
+      operationId: types_block_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockType'
+          description: ''
+    put:
+      operationId: types_block_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockType'
+          description: ''
+    patch:
+      operationId: types_block_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBlockType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBlockType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBlockType'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockType'
+          description: ''
+    delete:
+      operationId: types_block_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this block type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/types/line/:
+    get:
+      operationId: types_line_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLineTypeList'
+          description: ''
+    post:
+      operationId: types_line_create
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LineType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LineType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LineType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineType'
+          description: ''
+  /api/types/line/{id}/:
+    get:
+      operationId: types_line_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineType'
+          description: ''
+    put:
+      operationId: types_line_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LineType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LineType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LineType'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineType'
+          description: ''
+    patch:
+      operationId: types_line_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line type.
+        required: true
+      tags:
+      - types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLineType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLineType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLineType'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineType'
+          description: ''
+    delete:
+      operationId: types_line_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this line type.
+        required: true
+      tags:
+      - types
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/user/:
+    get:
+      operationId: user_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: paginate_by
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - user
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserOnboardingList'
+          description: ''
+    post:
+      operationId: user_create
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOnboarding'
+          description: ''
+  /api/user/{id}/:
+    get:
+      operationId: user_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - user
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOnboarding'
+          description: ''
+    put:
+      operationId: user_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOnboarding'
+          description: ''
+    patch:
+      operationId: user_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserOnboarding'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserOnboarding'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserOnboarding'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOnboarding'
+          description: ''
+    delete:
+      operationId: user_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - user
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/user/onboarding/:
+    put:
+      operationId: user_onboarding_update
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserOnboarding'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOnboarding'
+          description: ''
+components:
+  schemas:
+    AnnotationComponent:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+        allowed_values:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          nullable: true
+          description: Comma separated list of possible value, leave it empty for
+            free input.
+      required:
+      - pk
+    AnnotationTaxonomy:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        document:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 64
+        marker_type:
+          $ref: '#/components/schemas/MarkerTypeEnum'
+        marker_detail:
+          type: string
+          nullable: true
+          maxLength: 7
+        has_comments:
+          type: boolean
+        typology:
+          $ref: '#/components/schemas/AnnotationType'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationComponent'
+      required:
+      - name
+      - pk
+    AnnotationType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+      required:
+      - name
+      - pk
+    AuthToken:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        token:
+          type: string
+          readOnly: true
+      required:
+      - password
+      - token
+      - username
+    Block:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        document_part:
+          type: integer
+        external_id:
+          type: string
+          nullable: true
+          maxLength: 128
+        order:
+          type: integer
+          readOnly: true
+        box:
+          type: object
+          additionalProperties: {}
+        typology:
+          type: integer
+          nullable: true
+      required:
+      - box
+      - document_part
+      - order
+      - pk
+    BlockType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+      required:
+      - name
+      - pk
+    DetailedLine:
+      type: object
+      properties:
+        pk:
+          type: integer
+        document_part:
+          type: integer
+        external_id:
+          type: string
+          nullable: true
+          maxLength: 128
+        order:
+          type: integer
+          readOnly: true
+        region:
+          type: integer
+          nullable: true
+        baseline:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        mask:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        typology:
+          type: integer
+          nullable: true
+        transcriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineTranscription'
+      required:
+      - document_part
+      - order
+    ImageAnnotation:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        part:
+          type: integer
+        comments:
+          type: array
+          items:
+            type: string
+          nullable: true
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              title: Coordinates
+            maxItems: 2
+        taxonomy:
+          type: integer
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageAnnotationComponent'
+        as_w3c:
+          type: string
+          readOnly: true
+      required:
+      - as_w3c
+      - components
+      - coordinates
+      - part
+      - pk
+      - taxonomy
+    ImageAnnotationComponent:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        component:
+          type: integer
+        value:
+          type: string
+          nullable: true
+      required:
+      - component
+      - pk
+      - value
+    JobEnum:
+      enum:
+      - 1
+      - 2
+      type: integer
+    Line:
+      type: object
+      properties:
+        pk:
+          type: integer
+        document_part:
+          type: integer
+        external_id:
+          type: string
+          nullable: true
+          maxLength: 128
+        order:
+          type: integer
+          readOnly: true
+        region:
+          type: integer
+          nullable: true
+        baseline:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        mask:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        typology:
+          type: integer
+          nullable: true
+      required:
+      - document_part
+      - order
+    LineTranscription:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        line:
+          type: integer
+          nullable: true
+        transcription:
+          type: integer
+        content:
+          type: string
+          maxLength: 2048
+        graphs:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        versions:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        version_author:
+          type: string
+          readOnly: true
+        version_source:
+          type: string
+          readOnly: true
+        version_updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - line
+      - pk
+      - transcription
+      - version_author
+      - version_source
+      - version_updated_at
+      - versions
+    LineType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+      required:
+      - name
+      - pk
+    MarkerTypeEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+    OcrModel:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 256
+        file:
+          type: string
+          format: uri
+          nullable: true
+          pattern: (?:mlmodel)$
+        file_size:
+          type: integer
+        job:
+          $ref: '#/components/schemas/JobEnum'
+        owner:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          readOnly: true
+        training:
+          type: boolean
+          readOnly: true
+        versions:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+      required:
+      - job
+      - name
+      - owner
+      - pk
+      - training
+      - versions
+    PaginatedAnnotationTaxonomyList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationTaxonomy'
+    PaginatedAnnotationTypeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationType'
+    PaginatedBlockList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+    PaginatedBlockTypeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockType'
+    PaginatedImageAnnotationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageAnnotation'
+    PaginatedLineList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Line'
+    PaginatedLineTypeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineType'
+    PaginatedOcrModelList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OcrModel'
+    PaginatedPartList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+    PaginatedProjectList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+    PaginatedScriptList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Script'
+    PaginatedTagDocumentList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagDocument'
+    PaginatedTextAnnotationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextAnnotation'
+    PaginatedUserOnboardingList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOnboarding'
+    Part:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 512
+        filename:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        typology:
+          type: integer
+          nullable: true
+        image:
+          type: string
+          format: uri
+        image_file_size:
+          type: integer
+        bw_image:
+          type: string
+          format: uri
+        workflow:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        recoverable:
+          type: string
+          readOnly: true
+        transcription_progress:
+          type: integer
+          readOnly: true
+        source:
+          type: string
+          maxLength: 1024
+      required:
+      - filename
+      - order
+      - pk
+      - recoverable
+      - title
+      - transcription_progress
+      - workflow
+    PartDetail:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 512
+        filename:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        typology:
+          type: integer
+          nullable: true
+        image:
+          type: string
+          format: uri
+        image_file_size:
+          type: integer
+        bw_image:
+          type: string
+          format: uri
+        workflow:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        recoverable:
+          type: string
+          readOnly: true
+        transcription_progress:
+          type: integer
+          readOnly: true
+        source:
+          type: string
+          maxLength: 1024
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Line'
+        previous:
+          type: string
+          readOnly: true
+        next:
+          type: string
+          readOnly: true
+      required:
+      - filename
+      - lines
+      - next
+      - order
+      - pk
+      - previous
+      - recoverable
+      - regions
+      - title
+      - transcription_progress
+      - workflow
+    PatchedAnnotationTaxonomy:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        document:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 64
+        marker_type:
+          $ref: '#/components/schemas/MarkerTypeEnum'
+        marker_detail:
+          type: string
+          nullable: true
+          maxLength: 7
+        has_comments:
+          type: boolean
+        typology:
+          $ref: '#/components/schemas/AnnotationType'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationComponent'
+    PatchedAnnotationType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+    PatchedBlock:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        document_part:
+          type: integer
+        external_id:
+          type: string
+          nullable: true
+          maxLength: 128
+        order:
+          type: integer
+          readOnly: true
+        box:
+          type: object
+          additionalProperties: {}
+        typology:
+          type: integer
+          nullable: true
+    PatchedBlockType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+    PatchedImageAnnotation:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        part:
+          type: integer
+        comments:
+          type: array
+          items:
+            type: string
+          nullable: true
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              title: Coordinates
+            maxItems: 2
+        taxonomy:
+          type: integer
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageAnnotationComponent'
+        as_w3c:
+          type: string
+          readOnly: true
+    PatchedLine:
+      type: object
+      properties:
+        pk:
+          type: integer
+        document_part:
+          type: integer
+        external_id:
+          type: string
+          nullable: true
+          maxLength: 128
+        order:
+          type: integer
+          readOnly: true
+        region:
+          type: integer
+          nullable: true
+        baseline:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        mask:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        typology:
+          type: integer
+          nullable: true
+    PatchedLineType:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 128
+    PatchedOcrModel:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 256
+        file:
+          type: string
+          format: uri
+          nullable: true
+          pattern: (?:mlmodel)$
+        file_size:
+          type: integer
+        job:
+          $ref: '#/components/schemas/JobEnum'
+        owner:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          readOnly: true
+        training:
+          type: boolean
+          readOnly: true
+        versions:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+    PatchedPart:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 512
+        filename:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        typology:
+          type: integer
+          nullable: true
+        image:
+          type: string
+          format: uri
+        image_file_size:
+          type: integer
+        bw_image:
+          type: string
+          format: uri
+        workflow:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        recoverable:
+          type: string
+          readOnly: true
+        transcription_progress:
+          type: integer
+          readOnly: true
+        source:
+          type: string
+          maxLength: 1024
+    PatchedProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 512
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        owner:
+          type: integer
+          nullable: true
+        shared_with_users:
+          type: array
+          items:
+            type: integer
+            title: Share with users
+          title: Share with users
+        shared_with_groups:
+          type: array
+          items:
+            type: integer
+            title: Share with teams
+          title: Share with teams
+    PatchedTagDocument:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 100
+        color:
+          type: string
+          maxLength: 7
+    PatchedTextAnnotation:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        part:
+          type: integer
+        comments:
+          type: array
+          items:
+            type: string
+          nullable: true
+        taxonomy:
+          type: integer
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextAnnotationComponent'
+        start_line:
+          type: integer
+        start_offset:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        end_line:
+          type: integer
+        end_offset:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        as_w3c:
+          type: string
+          readOnly: true
+    PatchedTranscription:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 512
+    PatchedUserOnboarding:
+      type: object
+      properties:
+        onboarding:
+          type: boolean
+          title: Show onboarding
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 512
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        owner:
+          type: integer
+          nullable: true
+        shared_with_users:
+          type: array
+          items:
+            type: integer
+            title: Share with users
+          title: Share with users
+        shared_with_groups:
+          type: array
+          items:
+            type: integer
+            title: Share with teams
+          title: Share with teams
+      required:
+      - created_at
+      - id
+      - name
+      - slug
+      - updated_at
+    Script:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 128
+        name_fr:
+          type: string
+          maxLength: 128
+        iso_code:
+          type: string
+          maxLength: 4
+        text_direction:
+          $ref: '#/components/schemas/TextDirectionEnum'
+      required:
+      - id
+      - name
+    TagDocument:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 100
+        color:
+          type: string
+          maxLength: 7
+      required:
+      - name
+      - pk
+    TextAnnotation:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        part:
+          type: integer
+        comments:
+          type: array
+          items:
+            type: string
+          nullable: true
+        taxonomy:
+          type: integer
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextAnnotationComponent'
+        start_line:
+          type: integer
+        start_offset:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        end_line:
+          type: integer
+        end_offset:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        as_w3c:
+          type: string
+          readOnly: true
+      required:
+      - as_w3c
+      - components
+      - end_line
+      - end_offset
+      - part
+      - pk
+      - start_line
+      - start_offset
+      - taxonomy
+    TextAnnotationComponent:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        component:
+          type: integer
+        value:
+          type: string
+          nullable: true
+      required:
+      - component
+      - pk
+      - value
+    TextDirectionEnum:
+      enum:
+      - horizontal-lr
+      - horizontal-rl
+      - vertical-lr
+      - vertical-rl
+      - ttb
+      type: string
+    Transcription:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        name:
+          type: string
+          maxLength: 512
+      required:
+      - name
+      - pk
+    UserOnboarding:
+      type: object
+      properties:
+        onboarding:
+          type: boolean
+          title: Show onboarding
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
+servers:
+- url: https://escriptorium.dev.digitalbibleonline.org
+  description: Current testing server
