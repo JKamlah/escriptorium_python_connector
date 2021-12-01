@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from gc import freeze
 from typing import Any, Union, List
 from xmlrpc.client import DateTime
 
+from .super_models import PagenatedResponse
 from .transcription_models import GetTranscription
 from .region_models import GetRegionType
 from .line_models import GetLineType
@@ -88,12 +88,9 @@ class GetDocument:
 
 
 @dataclass
-class GetDocuments:
-    count: int
-    next: Union[str, None]
-    previous: Union[str, None]
-    results: List[GetDocument] = field(default_factory=list)
-
+class GetDocuments(PagenatedResponse):
+    results: List[GetDocument]
+    
     def __init__(
         self,
         count: int,
@@ -101,7 +98,5 @@ class GetDocuments:
         previous: Union[str, None],
         results: List[Any] = [],
     ):
-        self.count = count
-        self.next = next
-        self.previous = previous
+        super(GetDocuments, self).__init__(count, next, previous)
         self.results = [GetDocument(**x) for x in results]

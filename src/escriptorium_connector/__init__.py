@@ -9,4 +9,12 @@ from .models import (
     GetLineType,
     GetRegionType,
     GetTranscription,
+    GetAnnotationTaxonomy,
+    GetAnnotationTaxonomies,
+    GetTypology,
+    GetComponent,
+    PostAnnotationTaxonomy,
+    PostTypology,
+    PostComponent,
+    TextMarkerType,
 )

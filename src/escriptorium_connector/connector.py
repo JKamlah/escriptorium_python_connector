@@ -1,18 +1,40 @@
+# TODO: I am in the middle of a big refactor.
+# The goal is to have a Python class in the ./models
+# folder that can be used for input/output for all of
+# the functions in the connector instead of using bespoke
+# objects as we do now, which give no help to users, who
+# need to know exactly waht data to submit and who would like
+# to know what sort of data will be returned.
+
+# TODO: We should add a full testing suite for the connector.
+# See ../../tests/test_documents.py
+
+
 # region General Imports
 from io import BytesIO
-from typing import Any, Union, List
+from typing import Any, Union, List, Type, TypeVar, Generic
 from lxml import html
 import requests
 from requests.packages.urllib3.util.retry import Retry
 import logging
 import websocket
+import dataclasses
 import json
 import orjson
 
 # endregion
 
 # region LocalImports
-from .models.document_models import GetDocument, GetDocuments, PostDocument, PutDocument
+from .models import (
+    GetDocument,
+    GetDocuments,
+    PostDocument,
+    PutDocument,
+    GetAnnotationTaxonomy,
+    GetAnnotationTaxonomies,
+    PostAnnotationTaxonomy,
+    PagenatedResponse,
+)
 
 # endregion
 
@@ -44,6 +66,16 @@ class TimeoutHTTPAdapter(HTTPAdapter):
 # endregion
 
 logger = logging.getLogger(__name__)
+
+# Typing info
+P = TypeVar("P", bound=PagenatedResponse)
+
+# JSON dataclass support (See: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses)
+class EnhancedJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        return super().default(o)
 
 
 class EscriptoriumConnector:
@@ -143,23 +175,36 @@ class EscriptoriumConnector:
     def __post_url(
         self, url: str, payload: dict, files: object = None
     ) -> requests.Response:
+        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         return (
-            self.http.post(url, data=payload, files=files)
+            self.http.post(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.post(url, json=payload)
+            else self.http.post(url, json=prepared_payload)
         )
 
     def __put_url(
         self, url: str, payload: dict, files: object = None
     ) -> requests.Response:
+        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         return (
-            self.http.put(url, data=payload, files=files)
+            self.http.put(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.put(url, json=payload)
+            else self.http.put(url, json=prepared_payload)
         )
 
     def __delete_url(self, url: str) -> requests.Response:
         return self.http.delete(url)
+
+    def __get_paginated_response(self, url: str, cls: Type[P]) -> P:
+        r = self.__get_url(url)
+        all_docs = cls(**json.loads(r.text))
+        info = all_docs
+        while info.next is not None:
+            r = self.__get_url(info.next)
+            info = cls(**json.loads(r.text))
+            all_docs.results = all_docs.results + info.results
+
+        return all_docs
 
     # endregion
 
@@ -217,15 +262,7 @@ class EscriptoriumConnector:
 
     # region Document API
     def get_documents(self) -> GetDocuments:
-        r = self.__get_url(f"{self.api_url}documents/")
-        all_docs = GetDocuments(**json.loads(r.text))
-        info = all_docs
-        while info.next is not None:
-            r = self.__get_url(info.next)
-            info = GetDocuments(**json.loads(r.text))
-            all_docs.results = all_docs.results + info.results
-
-        return all_docs
+        return self.__get_paginated_response(f"{self.api_url}documents/", GetDocuments)
 
     def get_document(self, pk: int) -> GetDocument:
         r = self.__get_url(f"{self.api_url}documents/{pk}/")
@@ -577,7 +614,7 @@ class EscriptoriumConnector:
 
     def get_document_transcription(self, doc_pk: int, transcription_pk: int):
         r = self.__get_url(
-            f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}"
+            f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}/"
         )
         return r.json()
 
@@ -585,6 +622,12 @@ class EscriptoriumConnector:
         r = self.__post_url(
             f"{self.api_url}documents/{doc_pk}/transcriptions/",
             {"name": transcription_name},
+        )
+        return r.json()
+
+    def delete_document_transcription(self, doc_pk: int, transcription_pk: int):
+        r = self.__delete_url(
+            f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}/"
         )
         return r.json()
 
@@ -633,6 +676,50 @@ class EscriptoriumConnector:
             transcription,
         )
         return r
+
+    # endregion
+
+    # region Annotation API
+    def get_document_annotations(self, doc_pk: int) -> GetAnnotationTaxonomies:
+        return self.__get_paginated_response(
+            f"""{self.api_url}documents/{doc_pk}/taxonomies/annotations/""",
+            GetAnnotationTaxonomies,
+        )
+
+    def get_document_annotation(
+        self, doc_pk: int, annotation_pk
+    ) -> GetAnnotationTaxonomy:
+        r = self.__get_url(
+            f"""{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}""",
+        )
+        r_json = r.json()
+        return GetAnnotationTaxonomy(**r_json)
+
+    def create_document_annotation(
+        self, doc_pk: int, annotation: PostAnnotationTaxonomy
+    ) -> GetAnnotationTaxonomy:
+        r = self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/",
+            annotation.__dict__,
+        )
+        r_json = r.json()
+        print(r_json)
+        return GetAnnotationTaxonomy(**r_json)
+
+    def update_document_annotation(
+        self, doc_pk: int, annotation_pk, annotation: PostAnnotationTaxonomy
+    ) -> GetAnnotationTaxonomy:
+        r = self.__put_url(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}",
+            annotation.__dict__,
+        )
+        r_json = r.json()
+        return GetAnnotationTaxonomy(**r_json)
+
+    def delete_document_annotation(self, doc_pk: int, annotation_pk):
+        self.__delete_url(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}"
+        )
 
     # endregion
 
