@@ -77,7 +77,7 @@ class EscriptoriumConnector:
             try:
                 response.raise_for_status()
             except requests.HTTPError as err:
-                EscriptoriumConnectorHttpError(err.response.text, err)
+                raise EscriptoriumConnectorHttpError(err.response.text, err)
 
         self.http = requests.Session()
         self.http.hooks["response"] = [assert_status_hook]
@@ -644,7 +644,8 @@ class EscriptoriumConnectorHttpError(BaseException):
         self.error = http_error
 
     def __str__(self):
-        return self.django_error
+        nl = "\n"
+        return f"""{str(self.error)} with data {self.error.request.body.decode("utf8")}.{nl}Reason for error: {self.django_error}"""
 
     def __repr__(self):
         nl = "\n"

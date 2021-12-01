@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import sys
 
-sys.path.append("../src")
 from escriptorium_connector import (
     EscriptoriumConnector,
     PostDocument,
@@ -35,15 +34,6 @@ def create_document() -> GetDocument:
     new_document = PostDocument(
         "test-doc", "test-1", "Latin", ReadDirection.LTR, LineOffset.BASELINE, []
     )
-    # import requests
-    # try:
-    #     r = requests.post(
-    #         f"{api}/documents/", json=new_document.__dict__, headers=escr.http.headers
-    #     )
-    #     r.raise_for_status()
-    # except requests.HTTPError as err:
-    #     error_msg = r.text
-    #     print(error_msg)
     new_doc = escr.create_document(new_document)
     return new_doc
 
