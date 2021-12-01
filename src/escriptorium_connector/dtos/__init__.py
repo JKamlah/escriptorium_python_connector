@@ -1,4 +1,4 @@
-from .document_models import (
+from .document_dtos import (
     PostDocument,
     PutDocument,
     GetDocument,
@@ -7,10 +7,10 @@ from .document_models import (
     LineOffset,
 )
 
-from .line_models import GetLineType
-from .region_models import GetRegionType
-from .transcription_models import GetTranscription
-from .annotation_models import (
+from .line_dtos import GetLineType
+from .region_dtos import GetRegionType
+from .transcription_dtos import GetTranscription
+from .annotation_dtos import (
     TextMarkerType,
     GetAnnotationTaxonomy,
     GetAnnotationTaxonomies,
@@ -20,4 +20,5 @@ from .annotation_models import (
     PostTypology,
     PostComponent,
 )
-from .super_models import PagenatedResponse
+from .user_dtos import GetUser, GetOnboarding
+from .super_dtos import PagenatedResponse

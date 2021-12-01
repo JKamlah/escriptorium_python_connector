@@ -12,20 +12,19 @@
 
 # region General Imports
 from io import BytesIO
-from typing import Any, Union, List, Type, TypeVar, Generic
+from typing import Any, Union, List, Dict, Type, TypeVar
 from lxml import html
 import requests
-from requests.packages.urllib3.util.retry import Retry
+from requests.packages.urllib3.util import Retry
 import logging
 import websocket
 import dataclasses
 import json
-import orjson
 
 # endregion
 
 # region LocalImports
-from .models import (
+from .dtos import (
     GetDocument,
     GetDocuments,
     PostDocument,
@@ -34,6 +33,7 @@ from .models import (
     GetAnnotationTaxonomies,
     PostAnnotationTaxonomy,
     PagenatedResponse,
+    GetUser,
 )
 
 # endregion
@@ -83,16 +83,58 @@ class EscriptoriumConnector:
     def __init__(
         self,
         base_url: str,
-        api_url: str,
         username: str,
         password: str,
+        api_url: str = None,
         project: str = None,
     ):
+        """Simplified access to eScriptorium
+
+        The eScriptorium connector is a class that enables convenient access to
+        an online instance of the eScriptorium platform's HTTP API. After creating an
+        EscriptoriumConnector object, the object can be used to interact with the API
+        by means of the various functions it provides.
+
+        Args:
+            base_url (str): The base url of the eScriptorium server you wish to connect to (trailing / is optional)
+            username (str): The username used to logon to the eScriptorium website
+            password (str): The password used to logon to the eScriptorium website
+            api_url (str, optional): The url path to the api (trailing / is optional). Defaults to {base_url}api/
+            project (str, optional): The name of the eScriptorium project to use by default. Defaults to None.
+
+        Raises:
+            EscriptoriumConnectorHttpError: A description of the error returned from the eScriptorium HTTP API
+
+        Examples:
+            Creating the connector and performing operations:
+
+            >>> from escriptorium_connector import EscriptoriumConnector
+            >>> from escriptorium_connector.dtos import (
+            ...     PostDocument,
+            ...     ReadDirection,
+            ...     LineOffset,
+            ... )
+
+            >>> url = "https://www.escriptorium.fr"
+            >>> username = "my_username"
+            >>> password = "my_password"
+            >>>
+            >>> connector = EscriptoriumConnector(url, username, password)
+            >>> new_project_name = "test_project"
+            >>> user_data = connector.get_user()
+            >>> user_id = user_data.count
+            >>> new_project = connector.create_project({"name": new_project_name, "slug": new_project_name, "owner": user_id})
+            >>> new_document = PostDocument(
+            ...     "test-doc", project_name, "Latin", ReadDirection.LTR, LineOffset.BASELINE, []
+            ... )
+            >>> my_doc = connector.create_document(new_document)
+        """
+
         # Setup retries and timeouts for HTTP requests
         retry_strategy = Retry(
             total=5,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=[
+            method_whitelist=[
                 "HEAD",
                 "GET",
                 "POST",
@@ -117,8 +159,14 @@ class EscriptoriumConnector:
         self.http.mount("http://", adapter)
 
         # Make sure the urls terminates with a front slash
-        self.api_url = api_url if api_url[-1] == "/" else api_url + "/"
         self.base_url = base_url if base_url[-1] == "/" else base_url + "/"
+        self.api_url = (
+            f"""{base_url}api/"""
+            if api_url is None
+            else api_url
+            if api_url[-1] == "/"
+            else f"""{api_url}/"""
+        )
 
         self.http.headers.update({"Accept": "application/json"})
 
@@ -575,7 +623,7 @@ class EscriptoriumConnector:
 
         return block_types
 
-    def get_document_region_types(self, document_pk: int) -> List[dict[str, int]]:
+    def get_document_region_types(self, document_pk: int) -> List[Dict[str, int]]:
         doc_data = self.get_document(document_pk)
         return [x for x in doc_data["valid_block_types"]]
 
@@ -720,6 +768,12 @@ class EscriptoriumConnector:
         self.__delete_url(
             f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}"
         )
+
+    # endregion
+
+    # region User API
+    def get_user(self) -> GetUser:
+        return self.__get_paginated_response(f"""{self.api_url}user""", GetUser)
 
     # endregion
 

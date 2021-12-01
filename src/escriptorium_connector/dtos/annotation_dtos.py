@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Union, Any
 from dataclasses import dataclass
 
-from .super_models import PagenatedResponse
+from .super_dtos import PagenatedResponse
 
 
 class TextMarkerType(str, Enum):

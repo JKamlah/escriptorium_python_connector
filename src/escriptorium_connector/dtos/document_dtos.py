@@ -3,10 +3,10 @@ from enum import Enum
 from typing import Any, Union, List
 from xmlrpc.client import DateTime
 
-from .super_models import PagenatedResponse
-from .transcription_models import GetTranscription
-from .region_models import GetRegionType
-from .line_models import GetLineType
+from .super_dtos import PagenatedResponse
+from .transcription_dtos import GetTranscription
+from .region_dtos import GetRegionType
+from .line_dtos import GetLineType
 
 
 class ReadDirection(str, Enum):
@@ -90,7 +90,7 @@ class GetDocument:
 @dataclass
 class GetDocuments(PagenatedResponse):
     results: List[GetDocument]
-    
+
     def __init__(
         self,
         count: int,

@@ -1,4 +1,4 @@
-from typing import TypeVar, Type, List, Union, Any, Generic
+from typing import TypeVar, List, Union, Any
 
 T = TypeVar("T")
 
