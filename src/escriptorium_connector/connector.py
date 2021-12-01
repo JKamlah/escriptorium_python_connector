@@ -134,7 +134,7 @@ class EscriptoriumConnector:
         retry_strategy = Retry(
             total=5,
             status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=[
+            method_whitelist=[  # Used method_whitelist instead of methods_available for backwards compatability
                 "HEAD",
                 "GET",
                 "POST",
@@ -161,7 +161,7 @@ class EscriptoriumConnector:
         # Make sure the urls terminates with a front slash
         self.base_url = base_url if base_url[-1] == "/" else base_url + "/"
         self.api_url = (
-            f"""{base_url}api/"""
+            f"""{self.base_url}api/"""
             if api_url is None
             else api_url
             if api_url[-1] == "/"
