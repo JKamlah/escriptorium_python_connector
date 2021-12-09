@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "escriptorium-connector"
-version = "0.0.22"
+version = "0.1.1"
 description = "This simple python package makes it easy to connect to an eScriptorium instance and to work with the data there."
 authors = ["Bronson Brown-deVost <bronsonbdevost@gmail.com>"]
 license = "MIT"
@@ -23,6 +23,7 @@ pytest = "^6.2.5"
 setuptools = "^59.4.0"
 swagger-marshmallow-codegen = "^0.6.4"
 black = {version = "^21.11b1", allow-prereleases = true}
+ipykernel = "^6.6.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

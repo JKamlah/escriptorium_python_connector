@@ -7,6 +7,8 @@ import sys
 sys.path.append("../src")
 from escriptorium_connector import EscriptoriumConnector
 from escriptorium_connector.dtos import (
+    GetProject,
+    PostProject,
     GetDocument,
     PostDocument,
     ReadDirection,
@@ -36,16 +38,17 @@ def get_user_id() -> int:
 
 
 def create_project(project_name: str) -> int:
-    new_project = escr.create_project(
-        {"name": project_name, "slug": project_name, "owner": get_user_id()}
-    )
-    new_project_json = new_project.json()
-    if new_project_json["slug"] != ["project with this slug already exists."]:
-        return new_project_json["id"]
+    all_projects = (escr.get_projects()).results
+    requested_project = [x for x in all_projects if x.name == project_name]
+    if requested_project:
+        return requested_project[0].id
 
-    all_projects = escr.get_projects()
-    requested_project = [x for x in all_projects if x["name"] == project_name]
-    return requested_project[0]["id"] if requested_project else -1
+    new_project_data = PostProject(project_name, project_name, get_user_id(), [], [])
+    new_project = escr.create_project(new_project_data)
+    if new_project.slug != ["project with this slug already exists."]:
+        return new_project.id
+
+    return -1
 
 
 def create_document(document_name) -> GetDocument:

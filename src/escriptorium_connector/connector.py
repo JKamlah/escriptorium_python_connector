@@ -25,6 +25,10 @@ import json
 
 # region LocalImports
 from .dtos import (
+    GetProjects,
+    GetProject,
+    PostProject,
+    PutProject,
     GetDocument,
     GetDocuments,
     PostDocument,
@@ -34,6 +38,7 @@ from .dtos import (
     PostAnnotationTaxonomy,
     PagenatedResponse,
     GetUser,
+    GetRegionType,
 )
 
 # endregion
@@ -227,7 +232,7 @@ class EscriptoriumConnector:
         return (
             self.http.post(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.post(url, json=prepared_payload)
+            else self.http.post(url, data=prepared_payload)
         )
 
     def __put_url(
@@ -237,8 +242,40 @@ class EscriptoriumConnector:
         return (
             self.http.put(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.put(url, json=prepared_payload)
+            else self.http.put(url, data=prepared_payload)
         )
+
+    def __get_url_serialized(self, url: str, cls: Type[P]) -> P:
+        r = self.http.get(url)
+        r_json = r.json()
+        obj = cls(**r_json)
+        return obj
+
+    def __post_url_serialized(
+        self, url: str, payload: dict, cls: Type[P], files: object = None
+    ) -> P:
+        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
+        r = (
+            self.http.post(url, data=prepared_payload, files=files)
+            if files is not None
+            else self.http.post(url, data=prepared_payload)
+        )
+        r_json = r.json()
+        obj = cls(**r_json)
+        return obj
+
+    def __put_url_serialized(
+        self, url: str, payload: dict, cls: Type[P], files: object = None
+    ) -> P:
+        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
+        r = (
+            self.http.put(url, data=prepared_payload, files=files)
+            if files is not None
+            else self.http.put(url, data=prepared_payload)
+        )
+        r_json = r.json()
+        obj = cls(**r_json)
+        return obj
 
     def __delete_url(self, url: str) -> requests.Response:
         return self.http.delete(url)
@@ -263,22 +300,15 @@ class EscriptoriumConnector:
 
     def set_connector_project_by_pk(self, project_pk: int):
         self.project = project_pk
-        self.project_name = self.get_project(self.project)["name"]
+        self.project_name = (self.get_project(self.project)).name
 
-    def get_projects(self):
-        r = self.__get_url(f"{self.api_url}projects/")
-        info = r.json()
-        documents = info["results"]
-        while info["next"] is not None:
-            r = self.__get_url(info["next"])
-            info = r.json()
-            documents = documents + info["results"]
+    def get_projects(self) -> GetProjects:
+        return self.__get_paginated_response(f"{self.api_url}projects/", GetProjects)
 
-        return documents
-
-    def get_project(self, pk: int):
+    def get_project(self, pk: int) -> GetProject:
         r = self.__get_url(f"{self.api_url}projects/{pk}")
-        return r.json()
+        r_json = r.json()
+        return GetProject(**r_json)
 
     def get_project_pk_by_name(
         self, project_name: Union[str, None]
@@ -286,20 +316,24 @@ class EscriptoriumConnector:
         if project_name is None or project_name == "":
             return None
 
-        all_projects = self.get_projects()
-        matching_projects = [x for x in all_projects if x["name"] == project_name]
-        return matching_projects[0]["id"] if matching_projects else None
+        all_projects = (self.get_projects()).results
+        matching_projects = [x for x in all_projects if x.name == project_name]
+        return matching_projects[0].id if matching_projects else None
 
-    def create_project(self, project_data: object):
-        return self.__post_url(f"{self.api_url}projects/", project_data)
+    def create_project(self, project_data: PostProject) -> GetProject:
+        r = self.__post_url(f"{self.api_url}projects/", project_data.__dict__)
+        r_json = r.json()
+        return GetProject(**r_json)
 
-    def update_project(self, project_data: object):
-        return self.__put_url(f"{self.api_url}projects/", project_data)
+    def update_project(self, project_data: PutProject) -> GetProject:
+        r = self.__put_url(f"{self.api_url}projects/", project_data.__dict__)
+        r_json = r.json()
+        return GetProject(**r_json)
 
     def delete_project(self, project_pk: int):
         return self.__delete_url(f"{self.api_url}projects/{project_pk}")
 
-    def verify_project_exists(self, project_pk):
+    def verify_project_exists(self, project_pk: int) -> bool:
         try:
             self.get_project(project_pk)
             return True
@@ -443,7 +477,7 @@ class EscriptoriumConnector:
                 "transcription": transcription_pk,
                 "file_format": output_type,
                 "region_types": [
-                    x["pk"] for x in self.get_document_region_types(document_pk)
+                    x.pk for x in self.get_document_region_types(document_pk)
                 ],
                 "document": document_pk,
                 "parts": part_pk,
@@ -623,12 +657,12 @@ class EscriptoriumConnector:
 
         return block_types
 
-    def get_document_region_types(self, document_pk: int) -> List[Dict[str, int]]:
+    def get_document_region_types(self, document_pk: int) -> List[GetRegionType]:
         doc_data = self.get_document(document_pk)
-        return [x for x in doc_data["valid_block_types"]]
+        return [x for x in doc_data.valid_block_types]
 
     def create_region_type(self, region_type: object):
-        r = self.__post_url(f"{self.api_url}types/block/", region_type)
+        r = self.__post_url(f"{self.api_url}types/block/", region_type.__dict__)
         return r
 
     # endregion

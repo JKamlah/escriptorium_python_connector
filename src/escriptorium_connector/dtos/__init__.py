@@ -1,3 +1,9 @@
+from .project_dtos import (
+    GetProjects,
+    GetProject,
+    PostProject,
+    PutProject,
+)
 from .document_dtos import (
     PostDocument,
     PutDocument,
