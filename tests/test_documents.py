@@ -1,11 +1,6 @@
 # region global setup
 
-from dotenv import load_dotenv
-import os
-import sys
-
-sys.path.append("../src")
-from escriptorium_connector import EscriptoriumConnector
+from escriptorium_connector.connector import EscriptoriumConnector
 from escriptorium_connector.dtos import (
     GetProject,
     PostProject,
@@ -14,36 +9,25 @@ from escriptorium_connector.dtos import (
     ReadDirection,
     LineOffset,
 )
+from .helpers import get_connector
 
-load_dotenv()
-url = os.getenv("ESCRIPTORIUM_URL")
-username = os.getenv("ESCRIPTORIUM_USERNAME")
-password = os.getenv("ESCRIPTORIUM_PASSWORD")
-
-if url is None or username is None or password is None:
-    sys.exit()
-
-
-def get_connector() -> EscriptoriumConnector:
-    return EscriptoriumConnector(url, username, password)
-
-
-escr = get_connector()
 # endregion
 
 
-def get_user_id() -> int:
+def get_user_id(escr: EscriptoriumConnector) -> int:
     user_details = escr.get_user()
     return user_details.count
 
 
-def create_project(project_name: str) -> int:
+def create_project(escr: EscriptoriumConnector, project_name: str) -> int:
     all_projects = (escr.get_projects()).results
     requested_project = [x for x in all_projects if x.name == project_name]
     if requested_project:
         return requested_project[0].id
 
-    new_project_data = PostProject(project_name, project_name, get_user_id(), [], [])
+    new_project_data = PostProject(
+        project_name, project_name, get_user_id(escr), [], []
+    )
     new_project = escr.create_project(new_project_data)
     if new_project.slug != ["project with this slug already exists."]:
         return new_project.id
@@ -51,9 +35,9 @@ def create_project(project_name: str) -> int:
     return -1
 
 
-def create_document(document_name) -> GetDocument:
+def create_document(escr: EscriptoriumConnector, document_name: str) -> GetDocument:
     project_name = "pytest-suite-2"
-    _ = create_project(project_name)
+    _ = create_project(escr, project_name)
     new_document = PostDocument(
         document_name, project_name, "Latin", ReadDirection.LTR, LineOffset.BASELINE, []
     )
@@ -62,13 +46,22 @@ def create_document(document_name) -> GetDocument:
 
 
 def test_get_documents():
-    new_document = create_document("my document")
+    escr = get_connector()
+    # Create the document
+    new_document = create_document(escr, "my document")
+
+    # Get the document list to see if the new document is there
     documents = escr.get_documents()
+
+    # Immediately delete the new doc before running checks
+    escr.delete_document(new_document.pk)
     assert len(documents.results) > 0
 
+    # Check to see if the new doc is in the document list
     matched_documents = [x for x in documents.results if x.pk == new_document.pk]
     assert len(matched_documents) == 1
 
+    # Make sure the new document was returned with the correct data
     matched_document = matched_documents[0]
     assert matched_document.parts_count == new_document.parts_count
     assert matched_document.created_at == new_document.created_at
@@ -77,5 +70,7 @@ def test_get_documents():
     assert matched_document.project == new_document.project
     assert matched_document.read_direction == new_document.read_direction
 
-
-test_get_documents()
+    # Make sure that the document deletion was successfull
+    documents = escr.get_documents()
+    matched_documents = [x for x in documents.results if x.pk == new_document.pk]
+    assert len(matched_documents) == 0

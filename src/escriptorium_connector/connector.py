@@ -11,6 +11,8 @@
 
 
 # region General Imports
+import dataclasses
+from dataclasses import asdict
 from io import BytesIO
 from typing import Any, Union, List, Dict, Type, TypeVar
 from lxml import html
@@ -18,8 +20,13 @@ import requests
 from requests.packages.urllib3.util import Retry
 import logging
 import websocket
-import dataclasses
 import json
+
+# endregion
+
+# region Logging setup
+
+logger = logging.getLogger(__name__)
 
 # endregion
 
@@ -70,10 +77,9 @@ class TimeoutHTTPAdapter(HTTPAdapter):
 
 # endregion
 
-logger = logging.getLogger(__name__)
-
 # Typing info
 P = TypeVar("P", bound=PagenatedResponse)
+T = TypeVar("T")
 
 # JSON dataclass support (See: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses)
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -245,15 +251,18 @@ class EscriptoriumConnector:
             else self.http.put(url, data=prepared_payload)
         )
 
-    def __get_url_serialized(self, url: str, cls: Type[P]) -> P:
+    def __delete_url(self, url: str) -> requests.Response:
+        return self.http.delete(url)
+
+    def __get_url_serialized(self, url: str, cls: Type[T]) -> T:
         r = self.http.get(url)
         r_json = r.json()
         obj = cls(**r_json)
         return obj
 
     def __post_url_serialized(
-        self, url: str, payload: dict, cls: Type[P], files: object = None
-    ) -> P:
+        self, url: str, payload: dict, return_cls: Type[T], files: object = None
+    ) -> T:
         prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         r = (
             self.http.post(url, data=prepared_payload, files=files)
@@ -261,12 +270,12 @@ class EscriptoriumConnector:
             else self.http.post(url, data=prepared_payload)
         )
         r_json = r.json()
-        obj = cls(**r_json)
+        obj = return_cls(**r_json)
         return obj
 
     def __put_url_serialized(
-        self, url: str, payload: dict, cls: Type[P], files: object = None
-    ) -> P:
+        self, url: str, payload: dict, return_cls: Type[T], files: object = None
+    ) -> T:
         prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         r = (
             self.http.put(url, data=prepared_payload, files=files)
@@ -274,11 +283,8 @@ class EscriptoriumConnector:
             else self.http.put(url, data=prepared_payload)
         )
         r_json = r.json()
-        obj = cls(**r_json)
+        obj = return_cls(**r_json)
         return obj
-
-    def __delete_url(self, url: str) -> requests.Response:
-        return self.http.delete(url)
 
     def __get_paginated_response(self, url: str, cls: Type[P]) -> P:
         r = self.__get_url(url)
@@ -306,9 +312,7 @@ class EscriptoriumConnector:
         return self.__get_paginated_response(f"{self.api_url}projects/", GetProjects)
 
     def get_project(self, pk: int) -> GetProject:
-        r = self.__get_url(f"{self.api_url}projects/{pk}")
-        r_json = r.json()
-        return GetProject(**r_json)
+        return self.__get_url_serialized(f"{self.api_url}projects/{pk}", GetProject)
 
     def get_project_pk_by_name(
         self, project_name: Union[str, None]
@@ -321,14 +325,14 @@ class EscriptoriumConnector:
         return matching_projects[0].id if matching_projects else None
 
     def create_project(self, project_data: PostProject) -> GetProject:
-        r = self.__post_url(f"{self.api_url}projects/", project_data.__dict__)
-        r_json = r.json()
-        return GetProject(**r_json)
+        return self.__post_url_serialized(
+            f"{self.api_url}projects/", asdict(project_data), GetProject
+        )
 
     def update_project(self, project_data: PutProject) -> GetProject:
-        r = self.__put_url(f"{self.api_url}projects/", project_data.__dict__)
-        r_json = r.json()
-        return GetProject(**r_json)
+        return self.__put_url_serialized(
+            f"{self.api_url}projects/", asdict(project_data), GetProject
+        )
 
     def delete_project(self, project_pk: int):
         return self.__delete_url(f"{self.api_url}projects/{project_pk}")
@@ -347,18 +351,17 @@ class EscriptoriumConnector:
         return self.__get_paginated_response(f"{self.api_url}documents/", GetDocuments)
 
     def get_document(self, pk: int) -> GetDocument:
-        r = self.__get_url(f"{self.api_url}documents/{pk}/")
-        return GetDocument(**r.json())
+        return self.__get_url_serialized(f"{self.api_url}documents/{pk}/", GetDocument)
 
     def create_document(self, doc_data: PostDocument) -> GetDocument:
-        r = self.__post_url(f"{self.api_url}documents/", doc_data.__dict__)
-        r_json = r.json()
-        return GetDocument(**r_json)
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/", asdict(doc_data), GetDocument
+        )
 
     def update_document(self, doc_data: PutDocument) -> GetDocument:
-        r = self.__put_url(f"{self.api_url}documents/", doc_data.__dict__)
-        r_json = r.json()
-        return GetDocument(**r_json)
+        return self.__put_url_serialized(
+            f"{self.api_url}documents/", asdict(doc_data), GetDocument
+        )
 
     def delete_document(self, pk: int):
         return self.__delete_url(f"{self.api_url}documents/{pk}")
@@ -560,7 +563,7 @@ class EscriptoriumConnector:
     ):
         return self.__post_url(
             f"{self.api_url}documents/{document_pk}/parts/",
-            image_data_info,
+            image_data_info.__dict__,
             {"image": (image_data_info["filename"], image_data)},
         )
 
@@ -589,7 +592,8 @@ class EscriptoriumConnector:
 
     def create_document_part_line(self, doc_pk: int, part_pk: int, new_line: object):
         r = self.__post_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/", new_line
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/",
+            new_line.__dict__,
         )
         return r
 
@@ -615,7 +619,7 @@ class EscriptoriumConnector:
         return line_types
 
     def create_line_type(self, line_type: object):
-        r = self.__post_url(f"{self.api_url}types/line/", line_type)
+        r = self.__post_url(f"{self.api_url}types/line/", line_type.__dict__)
         return r
 
     # endregion
@@ -638,7 +642,7 @@ class EscriptoriumConnector:
 
         r = self.__post_url(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/blocks/",
-            region,
+            region.__dict__,
         )
         return r
 
@@ -755,7 +759,7 @@ class EscriptoriumConnector:
     ):
         r = self.__post_url(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/",
-            transcription,
+            transcription.__dict__,
         )
         return r
 
@@ -771,32 +775,28 @@ class EscriptoriumConnector:
     def get_document_annotation(
         self, doc_pk: int, annotation_pk
     ) -> GetAnnotationTaxonomy:
-        r = self.__get_url(
+        return self.__get_url_serialized(
             f"""{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}""",
+            GetAnnotationTaxonomy,
         )
-        r_json = r.json()
-        return GetAnnotationTaxonomy(**r_json)
 
     def create_document_annotation(
         self, doc_pk: int, annotation: PostAnnotationTaxonomy
     ) -> GetAnnotationTaxonomy:
-        r = self.__post_url(
+        return self.__post_url_serialized(
             f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/",
-            annotation.__dict__,
+            asdict(annotation),
+            GetAnnotationTaxonomy,
         )
-        r_json = r.json()
-        print(r_json)
-        return GetAnnotationTaxonomy(**r_json)
 
     def update_document_annotation(
         self, doc_pk: int, annotation_pk, annotation: PostAnnotationTaxonomy
     ) -> GetAnnotationTaxonomy:
-        r = self.__put_url(
+        return self.__put_url_serialized(
             f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}",
             annotation.__dict__,
+            GetAnnotationTaxonomy,
         )
-        r_json = r.json()
-        return GetAnnotationTaxonomy(**r_json)
 
     def delete_document_annotation(self, doc_pk: int, annotation_pk):
         self.__delete_url(

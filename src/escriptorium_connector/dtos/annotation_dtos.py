@@ -1,6 +1,7 @@
 from enum import Enum
-from typing import List, Union, Any
-from dataclasses import dataclass
+from typing import List
+from dataclasses import field
+from ..utils.pydantic_dataclass_fix import dataclass
 
 from .super_dtos import PagenatedResponse
 
@@ -44,7 +45,7 @@ class PostAnnotationTaxonomy:
     marker_detail: str
     has_comments: bool
     typology: PostTypology
-    components: List[PostComponent]
+    components: List[PostComponent] = field(default_factory=list)
 
 
 @dataclass(init=True, frozen=True)
@@ -56,18 +57,9 @@ class GetAnnotationTaxonomy:
     marker_detail: str
     has_comments: bool
     typology: GetTypology
-    components: List[GetComponent]
+    components: List[GetComponent] = field(default_factory=list)
 
 
+@dataclass
 class GetAnnotationTaxonomies(PagenatedResponse):
-    results: List[GetAnnotationTaxonomy]
-
-    def __init__(
-        self,
-        count: int,
-        next: Union[str, None],
-        previous: Union[str, None],
-        results: List[Any] = [],
-    ):
-        super(GetAnnotationTaxonomies, self).__init__(count, next, previous)
-        self.results = [GetAnnotationTaxonomy(**x) for x in results]
+    results: List[GetAnnotationTaxonomy] = field(default_factory=list)

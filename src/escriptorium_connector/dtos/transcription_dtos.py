@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from ..utils.pydantic_dataclass_fix import dataclass
 
 
 @dataclass(init=True, frozen=True)
