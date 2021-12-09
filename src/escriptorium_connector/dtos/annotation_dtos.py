@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import List
 from dataclasses import field
-from ..utils.pydantic_dataclass_fix import dataclass
+from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 
-from .super_dtos import PagenatedResponse
+from escriptorium_connector.dtos.super_dtos import PagenatedResponse
 
 
 class TextMarkerType(str, Enum):

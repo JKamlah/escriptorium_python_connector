@@ -1,13 +1,13 @@
 from dataclasses import field
-from ..utils.pydantic_dataclass_fix import dataclass
+from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 from enum import Enum
 from typing import List
 from datetime import datetime
 
-from .super_dtos import PagenatedResponse
-from .transcription_dtos import GetTranscription
-from .region_dtos import GetRegionType
-from .line_dtos import GetLineType
+from escriptorium_connector.dtos.super_dtos import PagenatedResponse
+from escriptorium_connector.dtos.transcription_dtos import GetTranscription
+from escriptorium_connector.dtos.region_dtos import GetRegionType
+from escriptorium_connector.dtos.line_dtos import GetLineType
 
 
 class ReadDirection(str, Enum):

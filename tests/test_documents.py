@@ -2,7 +2,6 @@
 
 from escriptorium_connector.connector import EscriptoriumConnector
 from escriptorium_connector.dtos import (
-    GetProject,
     PostProject,
     GetDocument,
     PostDocument,

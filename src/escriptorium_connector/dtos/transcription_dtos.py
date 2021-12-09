@@ -1,4 +1,4 @@
-from ..utils.pydantic_dataclass_fix import dataclass
+from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 
 
 @dataclass(init=True, frozen=True)

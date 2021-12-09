@@ -1,13 +1,16 @@
 # TODO: I am in the middle of a big refactor.
-# The goal is to have a Python class in the ./models
+# The goal is to have a Python class in the ./dtos
 # folder that can be used for input/output for all of
 # the functions in the connector instead of using bespoke
 # objects as we do now, which give no help to users, who
-# need to know exactly waht data to submit and who would like
+# need to know exactly what data to submit and who would like
 # to know what sort of data will be returned.
 
 # TODO: We should add a full testing suite for the connector.
-# See ../../tests/test_documents.py
+# See the beginnings in ../../tests/test_documents.py
+
+# TODO: add a docker-compose.yml which can spin up a working
+# escriptorium instance for running the tests.
 
 
 # region General Imports
@@ -31,7 +34,7 @@ logger = logging.getLogger(__name__)
 # endregion
 
 # region LocalImports
-from .dtos import (
+from escriptorium_connector.dtos import (
     GetProjects,
     GetProject,
     PostProject,
@@ -77,9 +80,10 @@ class TimeoutHTTPAdapter(HTTPAdapter):
 
 # endregion
 
-# Typing info
+# region Generics
 P = TypeVar("P", bound=PagenatedResponse)
 T = TypeVar("T")
+# endregion
 
 # JSON dataclass support (See: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses)
 class EnhancedJSONEncoder(json.JSONEncoder):

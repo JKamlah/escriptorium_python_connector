@@ -1,9 +1,9 @@
-from ..utils.pydantic_dataclass_fix import dataclass
+from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 from dataclasses import field
 from datetime import datetime
 from typing import List, Union, Any
 
-from .super_dtos import PagenatedResponse
+from escriptorium_connector.dtos.super_dtos import PagenatedResponse
 
 
 @dataclass(init=True, frozen=True)
