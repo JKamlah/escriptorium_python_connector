@@ -49,6 +49,9 @@ from escriptorium_connector.dtos import (
     PagenatedResponse,
     GetUser,
     GetRegionType,
+    GetComponent,
+    GetComponents,
+    PostComponent,
 )
 
 # endregion
@@ -242,7 +245,7 @@ class EscriptoriumConnector:
         return (
             self.http.post(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.post(url, data=prepared_payload)
+            else self.http.post(url, json=prepared_payload)
         )
 
     def __put_url(
@@ -252,7 +255,7 @@ class EscriptoriumConnector:
         return (
             self.http.put(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.put(url, data=prepared_payload)
+            else self.http.put(url, json=prepared_payload)
         )
 
     def __delete_url(self, url: str) -> requests.Response:
@@ -267,12 +270,7 @@ class EscriptoriumConnector:
     def __post_url_serialized(
         self, url: str, payload: dict, return_cls: Type[T], files: object = None
     ) -> T:
-        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
-        r = (
-            self.http.post(url, data=prepared_payload, files=files)
-            if files is not None
-            else self.http.post(url, data=prepared_payload)
-        )
+        r = self.__post_url(url, payload, files)
         r_json = r.json()
         obj = return_cls(**r_json)
         return obj
@@ -280,12 +278,7 @@ class EscriptoriumConnector:
     def __put_url_serialized(
         self, url: str, payload: dict, return_cls: Type[T], files: object = None
     ) -> T:
-        prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
-        r = (
-            self.http.put(url, data=prepared_payload, files=files)
-            if files is not None
-            else self.http.put(url, data=prepared_payload)
-        )
+        r = self.__put_url(url, payload, files)
         r_json = r.json()
         obj = return_cls(**r_json)
         return obj
@@ -780,7 +773,7 @@ class EscriptoriumConnector:
         self, doc_pk: int, annotation_pk
     ) -> GetAnnotationTaxonomy:
         return self.__get_url_serialized(
-            f"""{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}""",
+            f"""{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}/""",
             GetAnnotationTaxonomy,
         )
 
@@ -794,17 +787,45 @@ class EscriptoriumConnector:
         )
 
     def update_document_annotation(
-        self, doc_pk: int, annotation_pk, annotation: PostAnnotationTaxonomy
+        self, doc_pk: int, annotation_pk: int, annotation: PostAnnotationTaxonomy
     ) -> GetAnnotationTaxonomy:
         return self.__put_url_serialized(
-            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}",
+            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}/",
             annotation.__dict__,
             GetAnnotationTaxonomy,
         )
 
-    def delete_document_annotation(self, doc_pk: int, annotation_pk):
+    def delete_document_annotation(self, doc_pk: int, annotation_pk: int):
         self.__delete_url(
-            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}"
+            f"{self.api_url}documents/{doc_pk}/taxonomies/annotations/{annotation_pk}/"
+        )
+
+    def get_document_components(self, doc_pk: int) -> GetComponents:
+        return self.__get_paginated_response(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/components/", GetComponents
+        )
+
+    def create_document_component(
+        self, doc_pk: int, component: PostComponent
+    ) -> GetComponent:
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/components/",
+            asdict(component),
+            GetComponent,
+        )
+
+    def update_document_component(
+        self, doc_pk: int, component_pk: int, component: PostComponent
+    ) -> GetComponent:
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/components/{component_pk}/",
+            asdict(component),
+            GetComponent,
+        )
+
+    def delete_document_component(self, doc_pk: int, component_pk: int):
+        return self.__delete_url(
+            f"{self.api_url}documents/{doc_pk}/taxonomies/components/{component_pk}/",
         )
 
     # endregion

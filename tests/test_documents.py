@@ -1,47 +1,8 @@
 # region global setup
 
-from escriptorium_connector.connector import EscriptoriumConnector
-from escriptorium_connector.dtos import (
-    PostProject,
-    GetDocument,
-    PostDocument,
-    ReadDirection,
-    LineOffset,
-)
-from .helpers import get_connector
+from .helpers import get_connector, create_document
 
 # endregion
-
-
-def get_user_id(escr: EscriptoriumConnector) -> int:
-    user_details = escr.get_user()
-    return user_details.count
-
-
-def create_project(escr: EscriptoriumConnector, project_name: str) -> int:
-    all_projects = (escr.get_projects()).results
-    requested_project = [x for x in all_projects if x.name == project_name]
-    if requested_project:
-        return requested_project[0].id
-
-    new_project_data = PostProject(
-        project_name, project_name, get_user_id(escr), [], []
-    )
-    new_project = escr.create_project(new_project_data)
-    if new_project.slug != ["project with this slug already exists."]:
-        return new_project.id
-
-    return -1
-
-
-def create_document(escr: EscriptoriumConnector, document_name: str) -> GetDocument:
-    project_name = "pytest-suite-2"
-    _ = create_project(escr, project_name)
-    new_document = PostDocument(
-        document_name, project_name, "Latin", ReadDirection.LTR, LineOffset.BASELINE, []
-    )
-    new_doc = escr.create_document(new_document)
-    return new_doc
 
 
 def test_get_documents():

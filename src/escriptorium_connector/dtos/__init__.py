@@ -22,6 +22,7 @@ from .annotation_dtos import (
     GetAnnotationTaxonomies,
     GetTypology,
     GetComponent,
+    GetComponents,
     PostAnnotationTaxonomy,
     PostTypology,
     PostComponent,

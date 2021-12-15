@@ -26,12 +26,14 @@ class GetTypology:
 
 @dataclass(init=True, frozen=True)
 class PostComponent:
+    document: int
     name: str
     allowed_values: List[str]
 
 
 @dataclass(init=True, frozen=True)
 class GetComponent:
+    document: int
     pk: int
     name: str
     allowed_values: List[str]
@@ -45,7 +47,7 @@ class PostAnnotationTaxonomy:
     marker_detail: str
     has_comments: bool
     typology: PostTypology
-    components: List[PostComponent] = field(default_factory=list)
+    components: List[int] = field(default_factory=list)
 
 
 @dataclass(init=True, frozen=True)
@@ -57,9 +59,14 @@ class GetAnnotationTaxonomy:
     marker_detail: str
     has_comments: bool
     typology: GetTypology
-    components: List[GetComponent] = field(default_factory=list)
+    components: List[int] = field(default_factory=list)
 
 
 @dataclass
 class GetAnnotationTaxonomies(PagenatedResponse):
     results: List[GetAnnotationTaxonomy] = field(default_factory=list)
+
+
+@dataclass
+class GetComponents(PagenatedResponse):
+    results: List[GetComponent] = field(default_factory=list)
