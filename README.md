@@ -2,7 +2,7 @@
 
 # Escriptorium Connector
 
-This simple python package makes it easy to connect to escriptorium and work with the data stored there.
+This simple python package makes it easy to connect to [eScriptorium](https://gitlab.com/scripta/escriptorium) and work with the data stored there.
 
 ## Installation
 
@@ -49,6 +49,18 @@ Want to contribute? There is a lot to be done here, so we are happy for any PRs 
 
 This project uses Poetry. To start development, please pull down the repo from GitLab and run `poetry install`, which will make sure you have all the needed dependencies for the project and that you are using a valid Python version. Please use `poetry add <your-pip-package>` to install any new dependencies to the project so that they will be tracked by poetry.
 
+### Package Structure
+
+The escriptorium_connector package aims to provide a more or less fool-proof interface to the eScriptorium REST API. The main goal has bee to take the guess work out of what should be sent to the API in POST/PUT requests and to make very clear what one should expect to get back from a GET request. It also aims to ease introduction to the API by providing hard-coded access to all the endpoints the API provides, which might not be immediately accessible by other means.
+
+Part of the user convenience this package provides is a set of data transfer objects (DTOs) mentioned above, which take the guesswork out of API POST/PUT requests. These are available in the `src/escriptorium_connector/dtos` folder, make use of [Pydantic](https://pydantic-docs.helpmanual.io) for (de)serialization, and should all be exposed at the root of the package `src/escriptorium_connector/__init__.py`.
+
+The connector itself, `src/escriptorium_connector/connector.py`,provides high level functionality on top of some lower level actions. The class it provides, `EscriptoriumConnector`, takes care of acquiring the needed JWTs and cookies from an eScriptorium web server and needs only to be provided with the server URL, a username, and a password. The `EscriptoriumConnector` creates a special requests `http` instance that takes care of retries on 500 errors and some other niceties for error reporting (see the error classes in `src/escriptorium_connector/connector_errors.py`). It maintains its own HTTP session and uses websockets to listen for the completion of requests that return immediately from the server, but then notify the user later via websocket/email that the requested action has completed.
+
+As a final goal, all functionality exposed by the `EscriptoriumConnector` will have clearly typed arguments and return types. All endpoints should be tested at least to some degree (see the `tests` folder) and code coverage can be checked when running `poetry run pytest` with the proper settings in `setup.cfg` (see the notes at the end of that file). The current code coverage can be viewed in the `htmlconv` folder. 
+
+The escriptorium_connector package should be versioned in line with the [eScriptorium](https://gitlab.com/scripta/escriptorium) project, since different versions of eScriptorium will change their API surface and we cannot expect all production servers to be running the same version. Currently the latest version of the eScriptorium server is at version 0.10.2a, so the corresponding connector version should match at 0.10.2a, and any bugfixes to that version should be numbered as 0.10.2a.post1, 0.10.2a.post2, ..., 0.10.2a.postN. This will enable users to quickly verify they are using a connector that is compatible with the server they are accessing. __Note that the package has not yet reached full API coverage for any eScriptorium version, and thus it remains on a non-related version system.__
+
 ## Uploading to Pypi
 
-Poetry also makes uploading to Pypi very easy. Just confirm that all the package details in `pyproject.toml` are correct, bump the version of the package `poetry version 0.0.15`, and then use `poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD`, assuming you have set the environment variables `$PYPI_USERNAME` and `$PYPI_PASSWORD` appropriately (if you are using a Pypi token, then `PYPI_USERNAME=__token__` and `$PYPI_PASSWORD=<your-full-pypi-token>`).
+Poetry makes uploading to Pypi very easy. Just confirm that all the package details in `pyproject.toml` are correct, bump the version of the package `poetry version 0.0.15`, and then use `poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD`, assuming you have set the environment variables `$PYPI_USERNAME` and `$PYPI_PASSWORD` appropriately (if you are using a Pypi token, then `PYPI_USERNAME=__token__` and `$PYPI_PASSWORD=<your-full-pypi-token>`).

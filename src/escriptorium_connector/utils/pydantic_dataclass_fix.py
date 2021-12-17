@@ -31,7 +31,7 @@ def dataclass(
     frozen: bool = False,
     config: Type[Any] = None,
 ) -> Callable[[Type[_T]], Type[_T]]:  # type: ignore
-    ...
+    ...  # pragma: no cover
 
 
 @__dataclass_transform__(kw_only_default=True, field_descriptors=(Field, FieldInfo))
@@ -47,7 +47,7 @@ def dataclass(
     frozen: bool = False,
     config: Type[Any] = None,
 ) -> Type[_T]:
-    ...
+    ...  # pragma: no cover
 
 
 @__dataclass_transform__(kw_only_default=True, field_descriptors=(Field, FieldInfo))

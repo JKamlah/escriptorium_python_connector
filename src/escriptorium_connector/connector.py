@@ -24,6 +24,8 @@ from requests.packages.urllib3.util import Retry
 import logging
 import websocket
 import json
+import time
+from pydantic.error_wrappers import ValidationError
 
 # endregion
 
@@ -34,15 +36,29 @@ logger = logging.getLogger(__name__)
 # endregion
 
 # region LocalImports
+from escriptorium_connector.connector_errors import (
+    EscriptoriumConnectorHttpError,
+    EscriptoriumConnectorDtoSyntaxError,
+    EscriptoriumConnectorDtoTypeError,
+    EscriptoriumConnectorDtoValidationError,
+)
 from escriptorium_connector.dtos import (
     GetProjects,
     GetProject,
     PostProject,
     PutProject,
-    GetDocument,
     GetDocuments,
+    GetDocument,
     PostDocument,
     PutDocument,
+    GetParts,
+    GetPart,
+    PostPart,
+    PutPart,
+    GetLines,
+    GetLine,
+    PostLine,
+    PutLine,
     GetAnnotationTaxonomy,
     GetAnnotationTaxonomies,
     PostAnnotationTaxonomy,
@@ -218,18 +234,18 @@ class EscriptoriumConnector:
     # endregion
 
     # region Websockets (not used)
-    def __on_message(self, ws, message):
+    def __on_message(self, ws, message):  # pragma: no cover
         logging.debug(message)
 
-    def __on_error(self, ws, error):
+    def __on_error(self, ws, error):  # pragma: no cover
         logging.debug(error)
 
-    def __on_close(self, ws, close_status_code, close_msg):
+    def __on_close(self, ws, close_status_code, close_msg):  # pragma: no cover
         logging.debug("### websocket closed ###")
         logging.debug(close_status_code)
         logging.debug(close_msg)
 
-    def __on_open(self, ws):
+    def __on_open(self, ws):  # pragma: no cover
         logging.debug("### websocket opened ###")
 
     # endregion
@@ -261,35 +277,47 @@ class EscriptoriumConnector:
     def __delete_url(self, url: str) -> requests.Response:
         return self.http.delete(url)
 
-    def __get_url_serialized(self, url: str, cls: Type[T]) -> T:
-        r = self.http.get(url)
-        r_json = r.json()
-        obj = cls(**r_json)
+    def __serialize_response(
+        self, response: requests.Response, url: str, return_cls: Type[T]
+    ) -> T:
+        r_json = response.json()
+        try:
+            obj = return_cls(**r_json)
+        except SyntaxError as e:
+            raise EscriptoriumConnectorDtoSyntaxError(
+                e, response.status_code, url, response.text
+            )
+        except TypeError as e:
+            raise EscriptoriumConnectorDtoTypeError(
+                e, response.status_code, url, response.text
+            )
+        except ValidationError as e:
+            raise EscriptoriumConnectorDtoValidationError(
+                e, response.status_code, url, response.text
+            )
         return obj
+
+    def __get_url_serialized(self, url: str, return_cls: Type[T]) -> T:
+        r = self.http.get(url)
+        return self.__serialize_response(r, url, return_cls)
 
     def __post_url_serialized(
         self, url: str, payload: dict, return_cls: Type[T], files: object = None
     ) -> T:
         r = self.__post_url(url, payload, files)
-        r_json = r.json()
-        obj = return_cls(**r_json)
-        return obj
+        return self.__serialize_response(r, url, return_cls)
 
     def __put_url_serialized(
         self, url: str, payload: dict, return_cls: Type[T], files: object = None
     ) -> T:
         r = self.__put_url(url, payload, files)
-        r_json = r.json()
-        obj = return_cls(**r_json)
-        return obj
+        return self.__serialize_response(r, url, return_cls)
 
-    def __get_paginated_response(self, url: str, cls: Type[P]) -> P:
-        r = self.__get_url(url)
-        all_docs = cls(**json.loads(r.text))
+    def __get_paginated_response(self, url: str, return_cls: Type[P]) -> P:
+        all_docs = self.__get_url_serialized(url, return_cls)
         info = all_docs
         while info.next is not None:
-            r = self.__get_url(info.next)
-            info = cls(**json.loads(r.text))
+            info = self.__get_url_serialized(info.next, return_cls)
             all_docs.results = all_docs.results + info.results
 
         return all_docs
@@ -355,30 +383,117 @@ class EscriptoriumConnector:
             f"{self.api_url}documents/", asdict(doc_data), GetDocument
         )
 
-    def update_document(self, doc_data: PutDocument) -> GetDocument:
+    def update_document(self, pk: int, doc_data: PutDocument) -> GetDocument:
         return self.__put_url_serialized(
-            f"{self.api_url}documents/", asdict(doc_data), GetDocument
+            f"{self.api_url}documents/{pk}/", asdict(doc_data), GetDocument
         )
 
     def delete_document(self, pk: int):
-        return self.__delete_url(f"{self.api_url}documents/{pk}")
+        return self.__delete_url(f"{self.api_url}documents/{pk}/")
 
     # endregion
 
     # region Part API
-    def get_document_parts(self, doc_pk: int):
-        return self.get_document_images(doc_pk)
+    def get_document_parts(self, doc_pk: int) -> GetParts:
+        return self.__get_paginated_response(
+            f"{self.api_url}documents/{doc_pk}/parts/", GetParts
+        )
 
-    def get_document_part(self, doc_pk: int, part_pk: int):
-        r = self.__get_url(f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/")
-        return r.json()
+    def get_document_part(self, doc_pk: int, part_pk: int) -> GetPart:
+        return self.__get_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", GetPart
+        )
 
-    def delete_document_parts(self, document_pk: int, start: int, end: int):
-        parts = self.get_document_images(document_pk)
-        for part in parts[start:end]:
-            r = self.__delete_url(
-                f'{self.api_url}documents/{document_pk}/parts/{part["pk"]}/'
+    def get_document_part_image(self, doc_pk: int, part_pk: int) -> bytes:
+        part = self.get_document_part(doc_pk, part_pk)
+        return self.get_image(part.image.uri)
+
+    def get_document_part_thumbnail(
+        self, doc_pk: int, part_pk: int, large: bool = False
+    ) -> bytes:
+        # The thumbnails are not immediately generated,
+        # retry a couple times before giving up
+        num_tries = 5
+        current_try = 0
+        part = self.get_document_part(doc_pk, part_pk)
+        needed_size_exists = (
+            part.image.thumbnails.large is not None
+            if large
+            else part.image.thumbnails.card is not None
+        )
+
+        while not needed_size_exists and current_try < num_tries:
+            time.sleep(4)
+            part = self.get_document_part(doc_pk, part_pk)
+            needed_size_exists = (
+                part.image.thumbnails.large is not None
+                if large
+                else part.image.thumbnails.card is not None
             )
+
+        image_url = part.image.thumbnails.large if large else part.image.thumbnails.card
+        if image_url is None:
+            raise Exception(
+                f"""Could not find a {"large" if large else "card"} thumbnail for doc {doc_pk}, part {part_pk}"""
+            )
+
+        return self.get_image(image_url)
+
+    def create_document_part(
+        self,
+        document_pk: int,
+        image_data_info: PostPart,
+        filename: str,
+        image_data: bytes,
+    ) -> GetPart:
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{document_pk}/parts/",
+            asdict(image_data_info),
+            GetPart,
+            {"image": (filename, image_data)},
+        )
+
+    def update_document_part(
+        self,
+        doc_pk: int,
+        part_pk: int,
+        image_data_info: PutPart,
+    ) -> GetPart:
+        return self.__put_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/",
+            asdict(image_data_info),
+            GetPart,
+        )
+
+    def delete_document_part(self, doc_pk: int, part_pk: int):
+        self.__delete_url(f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/")
+
+    def delete_document_parts_by_index(self, doc_pk: int, start: int, end: int):
+        """Deletes N parts from the documents, starting with and including the
+        item at the `start` index and ending with but *not* including the item at
+        the `end` index.
+
+        Args:
+            doc_pk (int): PK of the document from which to remove the parts
+            start (int): Index of the first part to be removed according to the
+            order in which the document parts are returned (check the part `order`
+            attribute to be sure)
+            end (int): The index at which to stop deleting document partsaccording
+            to the order in which the document parts are returned (check the part
+            `order` attribute to be sure). The item at this index (if it exists)
+            will not be deleted.
+        """
+
+        if start > end:
+            return
+
+        parts = (self.get_document_parts(doc_pk)).results
+
+        if start > len(parts) < end:
+            return
+
+        for part in parts[start:end]:
+            self.delete_document_part(doc_pk, part.pk)
 
     # endregion
 
@@ -538,31 +653,12 @@ class EscriptoriumConnector:
 
     # endregion
 
-    # region Image Up/Download
+    # region Image Download
 
-    def get_document_images(self, document_pk: int):
-        r = self.__get_url(f"{self.api_url}documents/{document_pk}/parts/")
-        image_info = r.json()
-        image_names = image_info["results"]
-        while image_info["next"] is not None:
-            r = self.__get_url(image_info["next"])
-            image_info = r.json()
-            image_names = image_names + image_info["results"]
-
-        return image_names
-
-    def get_image(self, img_url: str):
-        r = self.__get_url(f"{self.base_url}{img_url}")
+    def get_image(self, img_url: str) -> bytes:
+        sanitized_img_url = img_url.lstrip("/")
+        r = self.__get_url(f"{self.base_url}{sanitized_img_url}")
         return r.content
-
-    def create_image(
-        self, document_pk: int, image_data_info: object, image_data: bytes
-    ):
-        return self.__post_url(
-            f"{self.api_url}documents/{document_pk}/parts/",
-            image_data_info.__dict__,
-            {"image": (image_data_info["filename"], image_data)},
-        )
 
     # endregion
 
@@ -570,35 +666,43 @@ class EscriptoriumConnector:
 
     # region Line API
 
-    def get_document_part_line(self, doc_pk: int, part_pk: int, line_pk: int):
-        r = self.__get_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}/"
+    def get_document_part_line(
+        self, doc_pk: int, part_pk: int, line_pk: int
+    ) -> GetLine:
+        return self.__get_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}/",
+            GetLine,
         )
-        return r.json()
 
-    def get_document_part_lines(self, doc_pk: int, part_pk: int):
-        r = self.__get_url(f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/")
-        line_info = r.json()
-        lines = line_info["results"]
-        while line_info["next"] is not None:
-            r = self.__get_url(line_info["next"])
-            line_info = r.json()
-            lines = lines + line_info["results"]
+    def get_document_part_lines(self, doc_pk: int, part_pk: int) -> GetLines:
+        return self.__get_paginated_response(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/", GetLines
+        )
 
-        return lines
-
-    def create_document_part_line(self, doc_pk: int, part_pk: int, new_line: object):
-        r = self.__post_url(
+    def create_document_part_line(
+        self, doc_pk: int, part_pk: int, new_line: PostLine
+    ) -> GetLine:
+        return self.__post_url_serialized(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/",
-            new_line.__dict__,
+            asdict(new_line),
+            GetLine,
         )
-        return r
 
-    def delete_document_part_line(self, doc_pk: int, part_pk: int, line_pk: int):
-        r = self.__delete_url(
+    def update_document_part_line(
+        self, doc_pk: int, part_pk: int, line_pk: int, new_line: PutLine
+    ) -> GetLine:
+        return self.__put_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}/",
+            asdict(new_line),
+            GetLine,
+        )
+
+    def delete_document_part_line(
+        self, doc_pk: int, part_pk: int, line_pk: int
+    ) -> requests.Response:
+        return self.__delete_url(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}"
         )
-        return r
 
     # endregion
 
@@ -835,32 +939,3 @@ class EscriptoriumConnector:
         return self.__get_paginated_response(f"""{self.api_url}user""", GetUser)
 
     # endregion
-
-
-# region Package Errors
-class EscriptoriumConnectorHttpError(BaseException):
-    def __init__(self, error_message: str, http_error: requests.HTTPError):
-        self.django_error = error_message
-        self.error = http_error
-
-    def __str__(self):
-        return self.django_error
-
-    def __repr__(self):
-        nl = "\n"
-        return f"""{self.django_error}{nl}{repr(self.error)}"""
-
-
-# endregion
-
-if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-
-    source_url = str(os.getenv("ESCRIPTORIUM_URL"))
-    source_api = f"{source_url}api/"
-    username = str(os.getenv("ESCRIPTORIUM_USERNAME"))
-    password = str(os.getenv("ESCRIPTORIUM_PASSWORD"))
-    project = str(os.getenv("ESCRIPTORIUM_PROJECT"))
-    source = EscriptoriumConnector(source_url, source_api, username, password, project)
-    print(source.get_documents())

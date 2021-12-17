@@ -4,6 +4,7 @@ from .project_dtos import (
     PostProject,
     PutProject,
 )
+
 from .document_dtos import (
     PostDocument,
     PutDocument,
@@ -13,9 +14,25 @@ from .document_dtos import (
     LineOffset,
 )
 
-from .line_dtos import GetLineType
+from .part_dtos import (
+    GetPart,
+    GetParts,
+    PostPart,
+    PutPart,
+)
+
+from .line_dtos import (
+    GetLineType,
+    GetLines,
+    GetLine,
+    PostLine,
+    PutLine,
+)
+
 from .region_dtos import GetRegionType
-from .transcription_dtos import GetTranscription
+
+from .transcription_dtos import GetAbbreviatedTranscription
+
 from .annotation_dtos import (
     TextMarkerType,
     GetAnnotationTaxonomy,
@@ -27,5 +44,7 @@ from .annotation_dtos import (
     PostTypology,
     PostComponent,
 )
+
 from .user_dtos import GetUser, GetOnboarding
+
 from .super_dtos import PagenatedResponse
