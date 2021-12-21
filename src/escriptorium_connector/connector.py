@@ -1,11 +1,3 @@
-# TODO: I am in the middle of a big refactor.
-# The goal is to have a Python class in the ./dtos
-# folder that can be used for input/output for all of
-# the functions in the connector instead of using bespoke
-# objects as we do now, which give no help to users, who
-# need to know exactly what data to submit and who would like
-# to know what sort of data will be returned.
-
 # TODO: We should add a full testing suite for the connector.
 # See the beginnings in ../../tests/test_documents.py
 
@@ -17,12 +9,11 @@
 import dataclasses
 from dataclasses import asdict
 from io import BytesIO
-from typing import Any, Union, List, Dict, Type, TypeVar
+from typing import Any, Tuple, Union, List, Dict, Type, TypeVar
 from lxml import html
 import requests
 from requests.packages.urllib3.util import Retry
 import logging
-import websocket
 import json
 import time
 from pydantic.error_wrappers import ValidationError
@@ -121,6 +112,8 @@ class TimeoutHTTPAdapter(HTTPAdapter):
 P = TypeVar("P", bound=PagenatedResponse)
 T = TypeVar("T")
 # endregion
+
+HttpUpload = Dict[str, Tuple[str, bytes]]
 
 # JSON dataclass support (See: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses)
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -273,7 +266,11 @@ class EscriptoriumConnector:
         return self.http.get(url)
 
     def __post_url(
-        self, url: str, payload: dict, files: object = None, as_form_data: bool = False
+        self,
+        url: str,
+        payload: dict,
+        files: Union[HttpUpload, None] = None,
+        as_form_data: bool = False,
     ) -> requests.Response:
         prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         return (
@@ -287,7 +284,7 @@ class EscriptoriumConnector:
         )
 
     def __put_url(
-        self, url: str, payload: dict, files: object = None
+        self, url: str, payload: dict, files: Union[HttpUpload, None] = None
     ) -> requests.Response:
         prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         return (
@@ -324,13 +321,21 @@ class EscriptoriumConnector:
         return self.__serialize_response(r, url, return_cls)
 
     def __post_url_serialized(
-        self, url: str, payload: dict, return_cls: Type[T], files: object = None
+        self,
+        url: str,
+        payload: dict,
+        return_cls: Type[T],
+        files: Union[HttpUpload, None] = None,
     ) -> T:
         r = self.__post_url(url, payload, files)
         return self.__serialize_response(r, url, return_cls)
 
     def __put_url_serialized(
-        self, url: str, payload: dict, return_cls: Type[T], files: object = None
+        self,
+        url: str,
+        payload: dict,
+        return_cls: Type[T],
+        files: Union[HttpUpload, None] = None,
     ) -> T:
         r = self.__put_url(url, payload, files)
         return self.__serialize_response(r, url, return_cls)
@@ -1160,6 +1165,10 @@ class EscriptoriumConnector:
     # endregion
 
     # region User API
+
+    # TODO: this function is simply wrong! I cannot figure out for the life
+    # of me how to get my user PK via API or otherwise. You need the user
+    # PK to create a new project, otherwise, it seems unnecessary.
     def get_user(self) -> GetUser:
         return self.__get_paginated_response(f"""{self.api_url}user""", GetUser)
 
