@@ -36,6 +36,11 @@ logger = logging.getLogger(__name__)
 # endregion
 
 # region LocalImports
+from escriptorium_connector.utils import (
+    TimeoutWebsocket,
+    get_all_forms,
+    get_form_details,
+)
 from escriptorium_connector.connector_errors import (
     EscriptoriumConnectorHttpError,
     EscriptoriumConnectorDtoSyntaxError,
@@ -59,15 +64,28 @@ from escriptorium_connector.dtos import (
     GetLine,
     PostLine,
     PutLine,
+    GetLineTypes,
+    GetLineType,
+    PostLineType,
     GetAnnotationTaxonomy,
     GetAnnotationTaxonomies,
     PostAnnotationTaxonomy,
     PagenatedResponse,
     GetUser,
+    GetRegions,
+    GetRegion,
+    PostRegion,
+    GetRegionTypes,
     GetRegionType,
+    PostRegionType,
     GetComponent,
     GetComponents,
     PostComponent,
+    GetAbbreviatedTranscription,
+    PostAbbreviatedTranscription,
+    GetTranscription,
+    GetTranscriptions,
+    PostTranscription,
 )
 
 # endregion
@@ -255,13 +273,17 @@ class EscriptoriumConnector:
         return self.http.get(url)
 
     def __post_url(
-        self, url: str, payload: dict, files: object = None
+        self, url: str, payload: dict, files: object = None, as_form_data: bool = False
     ) -> requests.Response:
         prepared_payload = json.loads(json.dumps(payload, cls=EnhancedJSONEncoder))
         return (
             self.http.post(url, data=prepared_payload, files=files)
             if files is not None
-            else self.http.post(url, json=prepared_payload)
+            else (
+                self.http.post(url, data=prepared_payload)
+                if as_form_data
+                else self.http.post(url, json=prepared_payload)
+            )
         )
 
     def __put_url(
@@ -353,6 +375,14 @@ class EscriptoriumConnector:
         return self.__post_url_serialized(
             f"{self.api_url}projects/", asdict(project_data), GetProject
         )
+
+    # def create_project(self, project_name: str) -> Union[GetProject, None]:
+    #     new_project_data = PostProject(
+    #         name=project_name, csrfmiddlewaretoken=self.csrfmiddlewaretoken
+    #     )
+    #     r = self.http.post(f"{self.base_url}projects/", data=asdict(new_project_data), headers=self.http.headers)
+    #     project_pk = self.get_project_pk_by_name(project_name)
+    #     return self.get_project(project_pk) if project_pk is not None else None
 
     def update_project(self, project_data: PutProject) -> GetProject:
         return self.__put_url_serialized(
@@ -580,11 +610,12 @@ class EscriptoriumConnector:
             raise Exception("Must use websockets to download ALTO exports")
 
         download_link = None
-        ws = websocket.WebSocket()
+        ws = TimeoutWebsocket()
         ws.connect(
-            f"{self.base_url.replace('http', 'ws')}ws/notif/", cookie=self.cookie
+            f"{self.base_url.replace('http', 'ws')}ws/notif/",
+            cookie=self.cookie,
         )
-        self.__post_url(
+        r = self.__post_url(
             f"{self.api_url}documents/{document_pk}/export/",
             {
                 "task": "export",
@@ -597,9 +628,10 @@ class EscriptoriumConnector:
                 "document": document_pk,
                 "parts": part_pk,
             },
+            as_form_data=True,
         )
 
-        message = ws.recv()
+        message = ws.recv(30)
         ws.close()
         logging.debug(message)
         msg = json.loads(message)
@@ -708,161 +740,354 @@ class EscriptoriumConnector:
 
     # region Line Type API
 
-    def get_line_types(self):
-        r = self.__get_url(f"{self.api_url}types/line/")
-        line_type_info = r.json()
-        line_types = line_type_info["results"]
-        while line_type_info["next"] is not None:
-            r = self.__get_url(line_type_info["next"])
-            line_type_info = r.json()
-            line_types = line_types + line_type_info["results"]
+    def get_document_line_types(self, doc_pk: int) -> List[GetLineType]:
+        doc_data = self.get_document(doc_pk)
+        return [x for x in doc_data.valid_line_types]
 
-        return line_types
+    def get_line_types(self) -> GetLineTypes:
+        return self.__get_paginated_response(f"{self.api_url}types/line/", GetLineTypes)
 
-    def create_line_type(self, line_type: object):
-        r = self.__post_url(f"{self.api_url}types/line/", line_type.__dict__)
-        return r
+    def get_line_type(self, line_type_pk: int) -> GetLineType:
+        return self.__get_url_serialized(
+            f"{self.api_url}types/line/{line_type_pk}/", GetLineType
+        )
+
+    def create_line_type(self, line_type: PostLineType) -> GetLineType:
+        return self.__post_url_serialized(
+            f"{self.api_url}types/line/", asdict(line_type), GetLineType
+        )
+
+    def update_line_type(
+        self, line_type_pk: int, line_type: PostLineType
+    ) -> GetLineType:
+        return self.__put_url_serialized(
+            f"{self.api_url}types/line/{line_type_pk}/", asdict(line_type), GetLineType
+        )
+
+    def delete_line_type(self, line_type_pk: int) -> requests.Response:
+        return self.__delete_url(f"{self.api_url}types/line/{line_type_pk}/")
+
+    # region document valid line types
+
+    # TODO: Warning, these functions are a hack to get past the lack of support
+    # in the API for creating document valid line types. They use a form POST
+    # to the eScriptorium website, since no API is available. They do NOT work
+    # if any annotation components, image annotations, or text annotations have
+    # already been created. The whole situation is quite poor right now and
+    # awaiting a fix.
+
+    def create_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
+        # Get the current ontology information
+        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        forms = get_all_forms(
+            ontology_url,
+            self.http,
+        )
+        ontology_form = forms[0]
+        form_details = get_form_details(ontology_form)
+        data = {}
+        # Copy all existing data
+        for input_tag in form_details["inputs"]:
+            if input_tag["name"] not in data:
+                data[input_tag["name"]] = []
+            data[input_tag["name"]].append(input_tag["value"])
+
+        # Change only the valid region types
+        data["valid_line_types"] = data["valid_line_types"] + line_type_pks
+
+        res = self.http.post(
+            ontology_url,
+            data=data,
+            headers={**self.http.headers, "Referer": ontology_url},
+        )
+
+    def create_document_line_type_by_pk(self, doc_pk: int, line_type_pk: int):
+        self.create_document_line_types_by_pk(doc_pk, [line_type_pk])
+
+    def create_document_line_types(self, doc_pk: int, line_type_names: List[str]):
+        # Make sure all the desired line types exist and get their PKs
+        current_line_types = self.get_line_types().results
+        current_line_type_names = [x.name for x in current_line_types]
+        non_existant_line_types = [
+            x for x in line_type_names if x not in current_line_type_names
+        ]
+        line_type_pks = [x.pk for x in current_line_types if x.name in line_type_names]
+        for non_existant_line_type in non_existant_line_types:
+            new_line_type = self.create_line_type(
+                PostLineType(name=non_existant_line_type)
+            )
+            line_type_pks.append(new_line_type.pk)
+
+        self.create_document_line_types_by_pk(doc_pk, line_type_pks)
+
+    def create_document_line_type(self, doc_pk: int, line_type_name: str):
+        return self.create_document_line_types(doc_pk, [line_type_name])
+
+    def delete_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
+        # Get the current ontology information
+        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        forms = get_all_forms(
+            ontology_url,
+            self.http,
+        )
+        ontology_form = forms[0]
+        form_details = get_form_details(ontology_form)
+        data = {}
+        # Copy all existing data
+        for input_tag in form_details["inputs"]:
+            if input_tag["name"] not in data:
+                data[input_tag["name"]] = []
+            data[input_tag["name"]].append(input_tag["value"])
+
+        # Change only the valid region types
+        data["valid_line_types"] = [
+            x for x in data["valid_line_types"] if x not in line_type_pks
+        ]
+
+        res = self.http.post(
+            ontology_url,
+            data=data,
+            headers={**self.http.headers, "Referer": ontology_url},
+        )
+
+    def delete_document_line_type_by_pk(self, doc_pk: int, line_type_pk: int):
+        self.delete_document_line_types_by_pk(doc_pk, [line_type_pk])
+
+    def delete_document_line_types(self, doc_pk: int, line_type_names: List[str]):
+        # Get the PKs of all line types to be deleted
+        current_line_types = self.get_line_types().results
+        delete_pks = [x.pk for x in current_line_types if x.name in line_type_names]
+
+        self.delete_document_line_types_by_pk(doc_pk, delete_pks)
+
+    def delete_document_line_type(self, doc_pk: int, line_type_name: str):
+        self.delete_document_line_types(doc_pk, [line_type_name])
+
+    # endregion
 
     # endregion
 
     # region Region API
 
-    def get_document_part_region(self, doc_pk: int, part_pk: int, region_pk: int):
-        regions = self.get_document_part_regions(doc_pk, part_pk)
-        region = [x for x in regions if x["pk"] == region_pk]
+    def get_document_part_region(
+        self, doc_pk: int, part_pk: int, region_pk: int
+    ) -> Union[GetRegion, None]:
+        regions = (self.get_document_part_regions(doc_pk, part_pk)).results
+        region = [x for x in regions if x.pk == region_pk]
         return region[0] if region else None
 
-    def get_document_part_regions(self, doc_pk: int, part_pk: int):
-        r = self.__get_url(f"{self.api_url}documents/{doc_pk}/parts/{part_pk}")
-        part = r.json()
-        return part["regions"]
-
-    def create_document_part_region(self, doc_pk: int, part_pk: int, region: object):
-        if not isinstance(region["box"], str):
-            region["box"] = json.dumps(region["box"])
-
-        r = self.__post_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/blocks/",
-            region.__dict__,
+    def get_document_part_regions(self, doc_pk: int, part_pk: int) -> GetRegions:
+        return self.__get_paginated_response(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}", GetRegions
         )
-        return r
+
+    def create_document_part_region(
+        self, doc_pk: int, part_pk: int, region: PostRegion
+    ) -> GetRegion:
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/blocks/",
+            asdict(region),
+            GetRegion,
+        )
 
     # endregion
 
     # region Region Type API
 
-    def get_region_types(self):
-        r = self.__get_url(f"{self.api_url}types/block/")
-        block_type_info = r.json()
-        block_types = block_type_info["results"]
-        while block_type_info["next"] is not None:
-            r = self.__get_url(block_type_info["next"])
-            block_type_info = r.json()
-            block_types = block_types + block_type_info["results"]
+    def get_region_types(self) -> GetRegionTypes:
+        return self.__get_paginated_response(
+            f"{self.api_url}types/block/", GetRegionTypes
+        )
 
-        return block_types
-
-    def get_document_region_types(self, document_pk: int) -> List[GetRegionType]:
-        doc_data = self.get_document(document_pk)
+    def get_document_region_types(self, doc_pk: int) -> List[GetRegionType]:
+        doc_data = self.get_document(doc_pk)
         return [x for x in doc_data.valid_block_types]
 
-    def create_region_type(self, region_type: object):
-        r = self.__post_url(f"{self.api_url}types/block/", region_type.__dict__)
-        return r
+    def create_region_type(self, region_type: PostRegionType) -> GetRegionType:
+        return self.__post_url_serialized(
+            f"{self.api_url}types/block/", asdict(region_type), GetRegionType
+        )
+
+    # region document valid region types
+
+    # TODO: Warning, these functions are a hack to get past the lack of support
+    # in the API for creating document valid region types. They use a form POST
+    # to the eScriptorium website, since no API is available. They do NOT work
+    # if any annotation components, image annotations, or text annotations have
+    # already been created. The whole situation is quite poor right now and
+    # awaiting a fix.
+
+    def create_document_region_types_by_pk(
+        self, doc_pk: int, region_type_pks: List[int]
+    ):
+        # Get the current ontology information
+        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        forms = get_all_forms(
+            ontology_url,
+            self.http,
+        )
+        ontology_form = forms[0]
+        form_details = get_form_details(ontology_form)
+        data = {}
+        # Copy all existing data
+        for input_tag in form_details["inputs"]:
+            if input_tag["name"] not in data:
+                data[input_tag["name"]] = []
+            data[input_tag["name"]].append(input_tag["value"])
+
+        # Change only the valid region types
+        data["valid_block_types"] = data["valid_block_types"] + region_type_pks
+
+        res = self.http.post(
+            ontology_url,
+            data=data,
+            headers={**self.http.headers, "Referer": ontology_url},
+        )
+
+    def create_document_region_type_by_pk(self, doc_pk: int, region_type_pk: int):
+        self.create_document_region_types_by_pk(doc_pk, [region_type_pk])
+
+    def create_document_region_types(self, doc_pk: int, region_type_names: List[str]):
+        # Make sure all the desired region types exist and get their PKs
+        current_region_types = self.get_line_types().results
+        current_region_type_names = [x.name for x in current_region_types]
+        non_existant_region_types = [
+            x for x in region_type_names if x not in current_region_type_names
+        ]
+        region_type_pks = [
+            x.pk for x in current_region_types if x.name in region_type_names
+        ]
+        for non_existant_region_type in non_existant_region_types:
+            new_region_type = self.create_line_type(
+                PostLineType(name=non_existant_region_type)
+            )
+            region_type_pks.append(new_region_type.pk)
+
+        self.create_document_region_types_by_pk(doc_pk, region_type_pks)
+
+    def create_document_region_type(self, doc_pk: int, region_type_pk: str):
+        return self.create_document_region_types(doc_pk, [region_type_pk])
+
+    def delete_document_region_types_by_pk(
+        self, doc_pk: int, region_type_pks: List[int]
+    ):
+        # Get the current ontology information
+        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        forms = get_all_forms(
+            ontology_url,
+            self.http,
+        )
+        ontology_form = forms[0]
+        form_details = get_form_details(ontology_form)
+        data = {}
+        # Copy all existing data
+        for input_tag in form_details["inputs"]:
+            if input_tag["name"] not in data:
+                data[input_tag["name"]] = []
+            data[input_tag["name"]].append(input_tag["value"])
+
+        # Change only the valid region types
+        data["valid_block_types"] = [
+            x for x in data["valid_block_types"] if x not in region_type_pks
+        ]
+
+        res = self.http.post(
+            ontology_url,
+            data=data,
+            headers={**self.http.headers, "Referer": ontology_url},
+        )
+
+    def delete_document_region_type_by_pk(self, doc_pk: int, region_type_pk: int):
+        self.delete_document_region_types_by_pk(doc_pk, [region_type_pk])
+
+    def delete_document_region_types(self, doc_pk: int, region_type_names: List[str]):
+        # Get the PKs of all region types to be deleted
+        current_region_types = self.get_region_types().results
+        delete_pks = [x.pk for x in current_region_types if x.name in region_type_names]
+
+        self.delete_document_region_types_by_pk(doc_pk, delete_pks)
+
+    def delete_document_region_type(self, doc_pk: int, region_type_name: str):
+        self.delete_document_region_types(doc_pk, [region_type_name])
+
+    # endregion
 
     # endregion
 
     # region Transcription API
     def get_document_part_line_transcription(
         self, doc_pk: int, part_pk: int, line_pk: int, line_transcription_pk: int
-    ):
+    ) -> Union[GetTranscription, None]:
         transcriptions = self.get_document_part_line_transcriptions(
             doc_pk, part_pk, line_pk
         )
-        transcription = [x for x in transcriptions if x["pk"] == line_transcription_pk]
+        transcription = [x for x in transcriptions if x.pk == line_transcription_pk]
         return transcription[0] if transcription else None
 
     def get_document_part_line_transcription_by_transcription(
         self, doc_pk: int, part_pk: int, line_pk: int, transcription_pk: int
-    ):
+    ) -> Union[GetTranscription, None]:
         transcriptions = self.get_document_part_line_transcriptions(
             doc_pk, part_pk, line_pk
         )
         transcription = [
-            x for x in transcriptions if x["transcription"] == transcription_pk
+            x for x in transcriptions if x.transcription == transcription_pk
         ]
         return transcription[0] if transcription else None
 
     def get_document_part_line_transcriptions(
         self, doc_pk: int, part_pk: int, line_pk: int
-    ):
+    ) -> List[GetTranscription]:
         line = self.get_document_part_line(doc_pk, part_pk, line_pk)
-        return line["transcriptions"]
+        return line.transcriptions if line.transcriptions is not None else []
 
-    def get_document_transcription(self, doc_pk: int, transcription_pk: int):
-        r = self.__get_url(
-            f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}/"
+    def get_document_transcription(
+        self, doc_pk: int, transcription_pk: int
+    ) -> GetAbbreviatedTranscription:
+        return self.__get_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}/",
+            GetAbbreviatedTranscription,
         )
-        return r.json()
 
-    def create_document_transcription(self, doc_pk: int, transcription_name: str):
-        r = self.__post_url(
+    def create_document_transcription(
+        self, doc_pk: int, transcription_name: PostAbbreviatedTranscription
+    ) -> GetAbbreviatedTranscription:
+        return self.__post_url_serialized(
             f"{self.api_url}documents/{doc_pk}/transcriptions/",
-            {"name": transcription_name},
+            asdict(transcription_name),
+            GetAbbreviatedTranscription,
         )
-        return r.json()
 
-    def delete_document_transcription(self, doc_pk: int, transcription_pk: int):
-        r = self.__delete_url(
+    def delete_document_transcription(
+        self, doc_pk: int, transcription_pk: int
+    ) -> requests.Response:
+        return self.__delete_url(
             f"{self.api_url}documents/{doc_pk}/transcriptions/{transcription_pk}/"
         )
-        return r.json()
 
-    def get_document_transcriptions(self, doc_pk: int):
+    def get_document_transcriptions(
+        self, doc_pk: int
+    ) -> List[GetAbbreviatedTranscription]:
         r = self.__get_url(f"{self.api_url}documents/{doc_pk}/transcriptions/")
-        return r.json()
-
-    def create_document_line_transcription(
-        self,
-        doc_pk: int,
-        parts_pk: int,
-        line_pk: int,
-        transcription_pk: int,
-        transcription_content: str,
-        graphs: Union[Any, None],
-    ):
-        payload = {
-            "line": line_pk,
-            "transcription": transcription_pk,
-            "content": transcription_content,
-        }
-        if graphs is not None:
-            payload["graphs"] = graphs
-        r = self.__post_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{parts_pk}/transcriptions/",
-            payload,
-        )
-        return r.json()
-
-    def get_document_part_transcriptions(self, doc_pk: int, part_pk: int):
-        get_url = f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/"
-        r = self.__get_url(get_url)
-        transcriptions_info = r.json()
-        transcriptions = transcriptions_info["results"]
-        while transcriptions_info["next"] is not None:
-            r = self.__get_url(transcriptions_info["next"])
-            transcriptions_info = r.json()
-            transcriptions = transcriptions + transcriptions_info["results"]
-        return transcriptions
+        r_json = r.json()
+        return [GetAbbreviatedTranscription(**x) for x in r_json]
 
     def create_document_part_transcription(
-        self, doc_pk: int, part_pk: int, transcription: object
-    ):
-        r = self.__post_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/",
-            transcription.__dict__,
+        self, doc_pk: int, parts_pk: int, transcription: PostTranscription
+    ) -> GetTranscription:
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{parts_pk}/transcriptions/",
+            asdict(transcription),
+            GetTranscription,
         )
-        return r
+
+    def get_document_part_transcriptions(
+        self, doc_pk: int, part_pk: int
+    ) -> GetTranscriptions:
+        return self.__get_paginated_response(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/",
+            GetTranscriptions,
+        )
 
     # endregion
 

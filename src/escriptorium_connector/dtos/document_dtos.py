@@ -1,7 +1,7 @@
 from dataclasses import field
 from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 from enum import Enum
-from typing import List
+from typing import List, Union
 from datetime import datetime
 
 from escriptorium_connector.dtos.super_dtos import PagenatedResponse
@@ -25,7 +25,7 @@ class LineOffset(int, Enum):
 class PostDocument:
     name: str
     project: str
-    main_script: str
+    main_script: Union[str, None]
     read_direction: ReadDirection
     line_offset: LineOffset
     tags: List[str] = field(default_factory=list)
@@ -35,7 +35,7 @@ class PostDocument:
 class PutDocument:
     name: str
     project: str
-    main_script: str
+    main_script: Union[str, None]
     read_direction: ReadDirection
     line_offset: LineOffset
     tags: List[str] = field(default_factory=list)
@@ -46,7 +46,7 @@ class GetDocument:
     pk: int
     name: str
     project: str
-    main_script: str
+    main_script: Union[str, None]
     read_direction: ReadDirection
     line_offset: LineOffset
     parts_count: int

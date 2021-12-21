@@ -21,6 +21,13 @@ class Image:
 
 
 @dataclass(init=True, frozen=True)
+class Workflow:
+    convert: Union[str, None] = None
+    segment: Union[str, None] = None
+    transcribe: Union[str, None] = None
+
+
+@dataclass(init=True, frozen=True)
 class PostPart:
     name: str
     typology: Union[int, None]
@@ -44,11 +51,11 @@ class GetPart:
     image: Image
     image_file_size: int
     bw_image: Union[str, None]
-    workflow: Dict[str, int]  # What should this really be?
     order: int
     recoverable: bool
     transcription_progress: int
     source: str
+    workflow: Union[Workflow, None] = None
     regions: Union[List[GetRegion], None] = None
     lines: Union[List[GetLine], None] = None
     previous: Union[int, None] = None

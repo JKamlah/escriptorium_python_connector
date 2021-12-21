@@ -1,34 +1,21 @@
-# def my_decorator(func):
-#     def wrapper():
-#         print("Something is happening before the function is called.")
-#         func("Hello ")
-#         print("Something is happening after the function is called.")
+from escriptorium_connector import EscriptoriumConnector, copy_documents_monitored
+import os
+from dotenv import load_dotenv
 
-#     return wrapper
+load_dotenv()
 
 
-# @my_decorator
-# def say_whee(msg: str=""):
-#     print(msg + "Whee!")
+if __name__ == "__main__":
+    load_dotenv()
+    url = "https://escriptorium.fr"
+    username = "bronsonbdevost"
+    password = "Huxtud-kyksak-jecbo8"
+    conn1 = EscriptoriumConnector(url, username, password)
 
+    load_dotenv()
+    url = str(os.getenv("ESCRIPTORIUM_URL"))
+    username = str(os.getenv("ESCRIPTORIUM_USERNAME"))
+    password = str(os.getenv("ESCRIPTORIUM_PASSWORD"))
+    conn2 = EscriptoriumConnector(url, username, password)
 
-# say_whee()
-
-class Dest(object):
-    def __init__(self):
-        self.m = "this obj"
-        
-    def __enter__(self):
-        return self
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        print(f"Just about to destroy {self.m}")
-        
-    @property
-    def msg(self):
-        return self.m
-
-with Dest() as d:
-    print(d.msg)
-
-print("done")
+    copy_documents_monitored(conn1, conn2, [135], project_name="sofer-mahir-2")

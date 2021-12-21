@@ -6,12 +6,6 @@ from dataclasses import field
 
 
 @dataclass(init=True, frozen=True)
-class GetLineType:
-    pk: int
-    name: str
-
-
-@dataclass(init=True, frozen=True)
 class PostLine:
     document_part: int
     external_id: Union[str, None] = None
@@ -47,3 +41,19 @@ class GetLine:
 @dataclass
 class GetLines(PagenatedResponse):
     results: List[GetLine] = field(default_factory=list)
+
+
+@dataclass(init=True, frozen=True)
+class PostLineType:
+    name: str
+
+
+@dataclass(init=True, frozen=True)
+class GetLineType:
+    pk: int
+    name: str
+
+
+@dataclass
+class GetLineTypes(PagenatedResponse):
+    results: List[GetLineType] = field(default_factory=list)

@@ -22,16 +22,31 @@ from .part_dtos import (
 )
 
 from .line_dtos import (
-    GetLineType,
     GetLines,
     GetLine,
     PostLine,
     PutLine,
+    GetLineTypes,
+    GetLineType,
+    PostLineType,
 )
 
-from .region_dtos import GetRegionType
+from .region_dtos import (
+    PostRegionType,
+    GetRegionType,
+    GetRegionTypes,
+    PostRegion,
+    GetRegion,
+    GetRegions,
+)
 
-from .transcription_dtos import GetAbbreviatedTranscription
+from .transcription_dtos import (
+    GetAbbreviatedTranscription,
+    PostAbbreviatedTranscription,
+    GetTranscriptions,
+    GetTranscription,
+    PostTranscription,
+)
 
 from .annotation_dtos import (
     TextMarkerType,

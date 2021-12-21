@@ -15,6 +15,12 @@ class PostProject:
     shared_with_groups: List[int] = field(default_factory=list)
 
 
+# @dataclass(init=True, frozen=True)
+# class PostProject:
+#     csrfmiddlewaretoken: str
+#     name: str
+
+
 @dataclass(init=True, frozen=True)
 class PutProject:
     name: str
