@@ -1,0 +1,5 @@
+[run]
+branch = True
+omit =
+    src/escriptorium_connector/dtos/escriptorium_schema.py
+    src/escriptorium_connector/connector_errors.py
