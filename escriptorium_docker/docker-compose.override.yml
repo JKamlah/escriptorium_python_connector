@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  web:
+    &web
+    restart: always
+    depends_on:
+      - "db"
+
+  channelserver:
+    <<: *web
+
+  db:
+    restart: always
+    ports:
+      - 127.0.0.1:2345:5432
+
+  redis:
+    restart: always
+    ports:
+      - 127.0.0.1:9736:6379
+
+  nginx:
+    restart: always
+    ports:
+      - "8000:80"
+    depends_on:
+      - "web"
+
+  flower:
+    restart: always
+
+  celery-main:
+    &celery
+    restart: always
+    depends_on:
+      - "db"
+      - "redis"
+      - "web"
+
+  celery-low-priority:
+    <<: *celery
+
+  celery-live:
+    <<: *celery
+
+volumes:
+  static:
+    driver: local
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: $PWD/static/
+  prometheus_data: {}
+
+  media:
+    driver: local
+    driver_opts:
+      type: none
+      o: 'bind'
+      device: $PWD/media/

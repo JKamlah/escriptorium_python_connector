@@ -125,3 +125,10 @@ venv.bak/
 dmypy.json
 @abdelaziz321
 abdelaziz321 commented on 21 Sep 2019
+
+# Test files (untitled)
+/untitled*
+
+# regenerated files
+/escriptorium_docker/media/*
+/escriptorium_docker/static/*
