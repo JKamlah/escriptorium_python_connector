@@ -53,7 +53,7 @@ This project uses Poetry. To start development, please pull down the repo from G
 
 The escriptorium_connector package aims to provide a more or less fool-proof interface to the eScriptorium REST API. The main goal has bee to take the guess work out of what should be sent to the API in POST/PUT requests and to make very clear what one should expect to get back from a GET request. It also aims to ease introduction to the API by providing hard-coded access to all the endpoints the API provides, which might not be immediately accessible by other means.
 
-Part of the user convenience this package provides is a set of data transfer objects (DTOs) mentioned above, which take the guesswork out of API POST/PUT requests. These are available in the `src/escriptorium_connector/dtos` folder, make use of [Pydantic](https://pydantic-docs.helpmanual.io) for (de)serialization, and should all be exposed only from the `dtos` package module `src/escriptorium_connector/dtos/__init__.py` not the root level.
+Part of the user convenience this package provides is a set of data transfer objects (DTOs) mentioned above, which take the guesswork out of API POST/PUT requests. These are available in the `src/escriptorium_connector/dtos` folder, make use of [Pydantic](https://pydantic-docs.helpmanual.io) for (de)serialization, and should all be exposed only from the `dtos` package module `src/escriptorium_connector/dtos/__init__.py` not the root level. A tentative, automated dump of the latest eScriptorium DTOs from the Django DRF is found in the file `./src/escriptorium_connector/dtos/escriptorium_schema.py`, sometimes the info there is helpful, other times it is not.
 
 The connector itself, `src/escriptorium_connector/connector.py`,provides high level functionality on top of some lower level actions. The class it provides, `EscriptoriumConnector`, takes care of acquiring the needed JWTs and cookies from an eScriptorium web server and needs only to be provided with the server URL, a username, and a password. The `EscriptoriumConnector` creates a special requests `http` instance that takes care of retries on 500 errors and some other niceties for error reporting (see the error classes in `src/escriptorium_connector/connector_errors.py`). It maintains its own HTTP session and uses websockets to listen for the completion of requests that return immediately from the server, but then notify the user later via websocket/email that the requested action has completed.
 
@@ -65,6 +65,15 @@ As a final goal, all functionality exposed by the `EscriptoriumConnector` will h
 
 The escriptorium_connector package should be versioned in line with the [eScriptorium](https://gitlab.com/scripta/escriptorium) project, since different versions of eScriptorium will change their API surface and we cannot expect all production servers to be running the same version. Currently the latest version of the eScriptorium server is at version 0.10.2a, so the corresponding connector version should match at 0.10.2a, and any bugfixes to that version should be numbered as 0.10.2a.post1, 0.10.2a.post2, ..., 0.10.2a.postN. This will enable users to quickly verify they are using a connector that is compatible with the server they are accessing. __Note that the package has not yet reached full API coverage for any eScriptorium version, and thus it remains on a non-related version system.__
 
+### Tests
+
+It would be nice to get as much test covereage as possible in order to detect breaking changes in the eScriptorium API. Tests are found in the `./tests` folder and can be run with `poetry run pytest --cov-config=.coveragerc`, which will generate a nice code coverage report in HTML in the `./htmlcov` folder.
+
 ## Uploading to Pypi
 
 Poetry makes uploading to Pypi very easy. Just confirm that all the package details in `pyproject.toml` are correct, bump the version of the package `poetry version 0.0.15`, and then use `poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD`, assuming you have set the environment variables `$PYPI_USERNAME` and `$PYPI_PASSWORD` appropriately (if you are using a Pypi token, then `PYPI_USERNAME=__token__` and `$PYPI_PASSWORD=<your-full-pypi-token>`).
+
+
+## Docker
+
+There were plans to create a simple docker-compose.yml setup in the `./escriptorium_docker` folder, which would enable immediate testing of the escriptorium_connector locally (are also via CI). This has not been completed, but would be a much appreciated addition in the future. 
