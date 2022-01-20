@@ -196,7 +196,7 @@ class EscriptoriumConnector:
             try:
                 response.raise_for_status()
             except requests.HTTPError as err:
-                EscriptoriumConnectorHttpError(err.response.text, err)
+                raise EscriptoriumConnectorHttpError(err.response.text, err)
 
         self.http = requests.Session()
         self.http.hooks["response"] = [assert_status_hook]
