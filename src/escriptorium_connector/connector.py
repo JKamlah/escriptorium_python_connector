@@ -877,14 +877,15 @@ class EscriptoriumConnector:
     def get_document_part_region(
         self, doc_pk: int, part_pk: int, region_pk: int
     ) -> Union[GetRegion, None]:
-        regions = (self.get_document_part_regions(doc_pk, part_pk)).results
+        regions = self.get_document_part_regions(doc_pk, part_pk)
         region = [x for x in regions if x.pk == region_pk]
         return region[0] if region else None
 
-    def get_document_part_regions(self, doc_pk: int, part_pk: int) -> GetRegions:
-        return self.__get_paginated_response(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}", GetRegions
+    def get_document_part_regions(self, doc_pk: int, part_pk: int) -> List[GetRegion]:
+        result = self.__get_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", GetPart
         )
+        return result.regions
 
     def create_document_part_region(
         self, doc_pk: int, part_pk: int, region: PostRegion
