@@ -783,12 +783,12 @@ class EscriptoriumConnector:
 
     def create_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -830,12 +830,12 @@ class EscriptoriumConnector:
 
     def delete_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -927,12 +927,12 @@ class EscriptoriumConnector:
         self, doc_pk: int, region_type_pks: List[int]
     ):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -955,7 +955,7 @@ class EscriptoriumConnector:
 
     def create_document_region_types(self, doc_pk: int, region_type_names: List[str]):
         # Make sure all the desired region types exist and get their PKs
-        current_region_types = self.get_line_types().results
+        current_region_types = self.get_region_types().results
         current_region_type_names = [x.name for x in current_region_types]
         non_existant_region_types = [
             x for x in region_type_names if x not in current_region_type_names
@@ -964,8 +964,8 @@ class EscriptoriumConnector:
             x.pk for x in current_region_types if x.name in region_type_names
         ]
         for non_existant_region_type in non_existant_region_types:
-            new_region_type = self.create_line_type(
-                PostLineType(name=non_existant_region_type)
+            new_region_type = self.create_region_type(
+                PostRegionType(name=non_existant_region_type)
             )
             region_type_pks.append(new_region_type.pk)
 
@@ -978,12 +978,12 @@ class EscriptoriumConnector:
         self, doc_pk: int, region_type_pks: List[int]
     ):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
