@@ -75,5 +75,8 @@ Poetry makes uploading to Pypi very easy. Just confirm that all the package deta
 
 
 ## Docker
+The escriptorium-pgp-setup repository contains instructions on running a local copy of e-scriptorium. It is WSL oriented, but should work on other environments as well.
 
-There were plans to create a simple docker-compose.yml setup in the `./escriptorium_docker` folder, which would enable immediate testing of the escriptorium_connector locally (are also via CI). This has not been completed, but would be a much appreciated addition in the future. 
+## Version History
+
+* 0.1.7 - update the convenience function copy_documents to work with the latest e-scriptorium
