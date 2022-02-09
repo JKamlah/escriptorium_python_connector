@@ -73,6 +73,11 @@ It would be nice to get as much test covereage as possible in order to detect br
 
 Poetry makes uploading to Pypi very easy. Just confirm that all the package details in `pyproject.toml` are correct, bump the version of the package `poetry version 0.0.15`, and then use `poetry publish --build --username $PYPI_USERNAME --password $PYPI_PASSWORD`, assuming you have set the environment variables `$PYPI_USERNAME` and `$PYPI_PASSWORD` appropriately (if you are using a Pypi token, then `PYPI_USERNAME=__token__` and `$PYPI_PASSWORD=<your-full-pypi-token>`).
 
+You should create a new git tag and push it after you publish:
+
+    git tag v0.0.15
+    git push --tags
+
 
 ## Docker
 The escriptorium-pgp-setup repository contains instructions on running a local copy of e-scriptorium. It is WSL oriented, but should work on other environments as well.
