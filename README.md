@@ -79,4 +79,4 @@ The escriptorium-pgp-setup repository contains instructions on running a local c
 
 ## Version History
 
-* 0.1.7 - update the convenience function copy_documents to work with the latest e-scriptorium
+* 0.1.9 - update the convenience function copy_documents to work with the latest e-scriptorium
