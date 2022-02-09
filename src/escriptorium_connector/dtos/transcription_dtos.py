@@ -25,12 +25,28 @@ class PostTranscription:
 
 
 @dataclass(init=True, frozen=True)
+class GetVersionData:
+    graphs: Union[None, List[List[int]]]
+    content: str
+
+
+@dataclass(init=True, frozen=True)
+class GetVersion:
+    data: GetVersionData
+    author: str
+    source: str
+    revision: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(init=True, frozen=True)
 class GetTranscription:
     pk: int
     line: int
     transcription: int
     content: str
-    versions: List[str]  # TODO: Check that this is correct
+    versions: List[GetVersion]
     version_author: str
     version_source: str
     version_updated_at: datetime

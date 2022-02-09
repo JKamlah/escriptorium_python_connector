@@ -1,7 +1,7 @@
 from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 from escriptorium_connector.dtos.super_dtos import PagenatedResponse
 from dataclasses import field
-from typing import List
+from typing import List, Union
 
 
 @dataclass(init=True, frozen=True)
@@ -35,7 +35,7 @@ class GetRegion:
     external_id: str
     order: int
     box: List[List[int]]
-    typology: int
+    typology: Union[int, None]
 
 
 @dataclass
