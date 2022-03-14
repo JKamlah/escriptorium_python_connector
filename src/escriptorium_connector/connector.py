@@ -629,7 +629,7 @@ class EscriptoriumConnector:
                 "file_format": output_type,
                 "region_types": [
                     x.pk for x in self.get_document_region_types(document_pk)
-                ]+[Undefined,Orphan],
+                ]+["Undefined","Orphan"],
                 "document": document_pk,
                 "parts": part_pk,
             },
