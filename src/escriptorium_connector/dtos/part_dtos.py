@@ -40,7 +40,6 @@ class PutPart:
     typology: Union[int, None]
     source: str
 
-
 @dataclass(init=True, frozen=True)
 class GetPart:
     pk: int
@@ -50,7 +49,7 @@ class GetPart:
     typology: Union[int, None]
     image: Image
     image_file_size: int
-    bw_image: Union[str, None]
+    bw_image: Union[Image, None]
     order: int
     recoverable: bool
     transcription_progress: int
