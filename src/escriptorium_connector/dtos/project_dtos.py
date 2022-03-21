@@ -37,7 +37,7 @@ class GetProject:
     slug: str
     created_at: datetime
     updated_at: datetime
-    owner: Union[int, None]
+    owner: Union[str, int, None]
     shared_with_users: List[int] = field(default_factory=list)
     shared_with_groups: List[int] = field(default_factory=list)
 
