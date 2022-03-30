@@ -33,6 +33,7 @@ from escriptorium_connector.utils import (
     get_form_details,
 )
 from escriptorium_connector.connector_errors import (
+    EscriptoriumonnectorInitError,
     EscriptoriumConnectorHttpError,
     EscriptoriumConnectorDtoSyntaxError,
     EscriptoriumConnectorDtoTypeError,
@@ -128,8 +129,9 @@ class EscriptoriumConnector:
     def __init__(
         self,
         base_url: str,
-        username: str,
-        password: str,
+        username: str = None,
+        password: str = None,
+        api_key: str = None,
         api_url: str = None,
         project: str = None,
     ):
@@ -138,12 +140,14 @@ class EscriptoriumConnector:
         The eScriptorium connector is a class that enables convenient access to
         an online instance of the eScriptorium platform's HTTP API. After creating an
         EscriptoriumConnector object, the object can be used to interact with the API
-        by means of the various functions it provides.
+        by means of the various functions it provides. The connector may be initialized
+        either with a username and password, or with an api_key.
 
         Args:
             base_url (str): The base url of the eScriptorium server you wish to connect to (trailing / is optional)
-            username (str): The username used to logon to the eScriptorium website
-            password (str): The password used to logon to the eScriptorium website
+            username (str, optional): The username used to logon to the eScriptorium website
+            password (str, optional): The password used to logon to the eScriptorium website
+            api_key (str, optional): The api key used to the eScriptorium API (only necessary if no username and password is provided)
             api_url (str, optional): The url path to the api (trailing / is optional). Defaults to {base_url}api/
             project (str, optional): The name of the eScriptorium project to use by default. Defaults to None.
 
@@ -174,6 +178,14 @@ class EscriptoriumConnector:
             ... )
             >>> my_doc = connector.create_document(new_document)
         """
+
+        # Raise an error if no authentication is provided
+        if username is None and password is None and api_key is None:
+            raise EscriptoriumonnectorInitError("Must either init with a username+password or an api_key")
+
+        # Raise an error when authenticating with username+password, but one or the other is missing
+        if api_key is None and (username is None or password is None):
+            raise EscriptoriumonnectorInitError("Must either init with a username+password or an api_key")
 
         # Setup retries and timeouts for HTTP requests
         retry_strategy = Retry(
@@ -215,28 +227,30 @@ class EscriptoriumConnector:
 
         self.http.headers.update({"Accept": "application/json"})
 
-        login_url = f"""{self.base_url}login/"""
-        result = self.http.get(login_url)
-        tree = html.fromstring(result.text)
-        self.csrfmiddlewaretoken = list(
-            set(tree.xpath("//input[@name='csrfmiddlewaretoken']/@value"))
-        )[0]
-        payload = {
-            "username": username,
-            "password": password,
-            "csrfmiddlewaretoken": self.csrfmiddlewaretoken,
-        }
-        result = self.http.post(
-            login_url, data=payload, headers={**self.http.headers, "referer": login_url}
-        )
-        self.cookie = "; ".join(
-            [f"""{k}={v}""" for k, v in self.http.cookies.get_dict().items()]
-        )
-        result = self.http.get(self.base_url + "profile/apikey/")
-        tree = html.fromstring(result.text)
-        api_key = list(set(tree.xpath("//button[@id='api-key-clipboard']/@data-key")))[
-            0
-        ]
+        # Collect the API key if none was submitted.
+        if api_key is None:
+            login_url = f"""{self.base_url}login/"""
+            result = self.http.get(login_url)
+            tree = html.fromstring(result.text)
+            self.csrfmiddlewaretoken = list(
+                set(tree.xpath("//input[@name='csrfmiddlewaretoken']/@value"))
+            )[0]
+            payload = {
+                "username": username,
+                "password": password,
+                "csrfmiddlewaretoken": self.csrfmiddlewaretoken,
+            }
+            result = self.http.post(
+                login_url, data=payload, headers={**self.http.headers, "referer": login_url}
+            )
+            self.cookie = "; ".join(
+                [f"""{k}={v}""" for k, v in self.http.cookies.get_dict().items()]
+            )
+            result = self.http.get(self.base_url + "profile/apikey/")
+            tree = html.fromstring(result.text)
+            api_key = list(set(tree.xpath("//button[@id='api-key-clipboard']/@data-key")))[
+                0
+            ]
         self.http.headers.update({"Authorization": f"""Token {api_key}"""})
 
         self.project_name = project

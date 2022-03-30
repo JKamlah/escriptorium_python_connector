@@ -8,6 +8,8 @@ import requests
 class EscriptoriumConnectorError(BaseException):
     ...
 
+class EscriptoriumonnectorInitError(EscriptoriumConnectorError):
+    ...
 
 class EscriptoriumConnectorHttpError(EscriptoriumConnectorError):
     def __init__(self, error_message: str, http_error: requests.HTTPError):
