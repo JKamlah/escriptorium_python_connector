@@ -84,4 +84,5 @@ The escriptorium-pgp-setup repository contains instructions on running a local c
 
 ## Version History
 
+* 0.1.11 - allow the owner field of the project DTO to be a string (as is with more recent e-scriptoirum versions)
 * 0.1.9 - update the convenience function copy_documents to work with the latest e-scriptorium
