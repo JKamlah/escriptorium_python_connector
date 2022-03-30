@@ -9,8 +9,6 @@ from escriptorium_connector.dtos.super_dtos import PagenatedResponse
 @dataclass(init=True, frozen=True)
 class PostProject:
     name: str
-    slug: str
-    owner: int
     shared_with_users: List[int] = field(default_factory=list)
     shared_with_groups: List[int] = field(default_factory=list)
 
@@ -24,8 +22,6 @@ class PostProject:
 @dataclass(init=True, frozen=True)
 class PutProject:
     name: str
-    slug: str
-    owner: int
     shared_with_users: List[int] = field(default_factory=list)
     shared_with_groups: List[int] = field(default_factory=list)
 

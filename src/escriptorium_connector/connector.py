@@ -7,6 +7,7 @@
 
 # region General Imports
 import dataclasses
+import ssl
 from dataclasses import asdict
 from io import BytesIO
 from typing import Any, Tuple, Union, List, Dict, Type, TypeVar
@@ -134,6 +135,7 @@ class EscriptoriumConnector:
         api_key: str = None,
         api_url: str = None,
         project: str = None,
+        verify_ssl: bool = True
     ):
         """Simplified access to eScriptorium
 
@@ -150,6 +152,7 @@ class EscriptoriumConnector:
             api_key (str, optional): The api key used to the eScriptorium API (only necessary if no username and password is provided)
             api_url (str, optional): The url path to the api (trailing / is optional). Defaults to {base_url}api/
             project (str, optional): The name of the eScriptorium project to use by default. Defaults to None.
+            verify_ssl (bool, optional): Whether to very the SSL certificate of the eScriptorium server. Defaults to True.
 
         Raises:
             EscriptoriumConnectorHttpError: A description of the error returned from the eScriptorium HTTP API
@@ -211,6 +214,8 @@ class EscriptoriumConnector:
                 raise EscriptoriumConnectorHttpError(err.response.text, err)
 
         self.http = requests.Session()
+        if not verify_ssl:
+            self.http.verify = False
         self.http.hooks["response"] = [assert_status_hook]
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
@@ -629,7 +634,7 @@ class EscriptoriumConnector:
             raise Exception("Must use websockets to download ALTO exports")
 
         download_link = None
-        ws = TimeoutWebsocket()
+        ws = TimeoutWebsocket(sslopt={"cert_reqs": ssl.CERT_NONE}) if self.http.verify is False else TimeoutWebsocket()
         ws.connect(
             f"{self.base_url.replace('http', 'ws')}ws/notif/",
             cookie=self.cookie,

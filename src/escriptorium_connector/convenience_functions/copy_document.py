@@ -201,9 +201,7 @@ def copy_documents_generator(
     matching_projects = [x for x in dest_projects if x.name == project_name]
     if len(matching_projects) == 0:
         new_project = PostProject(
-            name=project_name,
-            slug=project_name,
-            owner=destination_server.get_user().count,  # This is not the user ID, I don't know how to get that!!!
+            name=project_name
         )
         new_project = destination_server.create_project(new_project)
         destination_server.set_connector_project_by_pk(new_project.id)
