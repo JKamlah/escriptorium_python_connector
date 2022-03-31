@@ -22,6 +22,7 @@ def test_parts():
             source="https://en.wikipedia.org/wiki/Vulgate#/media/File:Cod._Sangallensis_63_(277).jpg",
         )
 
+        # Create the new part
         new_part = escr.create_document_part(
             new_document.pk, new_part_info, image_filename, image_file.read_bytes()
         )

@@ -6,7 +6,7 @@ from deepdiff import DeepDiff
 
 # endregion
 
-# Try CRUD operations on the parts endpoint
+# Try CRUD operations on the lines endpoint
 def test_lines():
     with PrepForPartTest() as (escr, new_document, new_part):
         new_line_id = "test-line-id"
@@ -16,6 +16,8 @@ def test_lines():
             baseline=[[10, 10], [30, 10]],
             mask=[[0, 0], [0, 30], [40, 30], [40, 0], [0, 0]],
         )
+        
+        # Check line creation
         new_line = escr.create_document_part_line(
             new_document.pk, new_part.pk, new_line_data
         )

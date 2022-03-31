@@ -55,8 +55,6 @@ def create_project(escr: EscriptoriumConnector, project_name: str) -> Union[int,
 
     new_project_data = PostProject(
         name=project_name,
-        slug=project_name,
-        owner=get_user_id(escr),
         shared_with_groups=[],
         shared_with_users=[],
     )

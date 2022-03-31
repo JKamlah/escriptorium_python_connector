@@ -67,7 +67,7 @@ The escriptorium_connector package should be versioned in line with the [eScript
 
 ### Tests
 
-It would be nice to get as much test covereage as possible in order to detect breaking changes in the eScriptorium API. Tests are found in the `./tests` folder and can be run with `poetry run pytest --cov-config=.coveragerc`, which will generate a nice code coverage report in HTML in the `./htmlcov` folder.
+It would be nice to get as much test covereage as possible in order to detect breaking changes in the eScriptorium API. Tests are found in the `./tests` folder and can be run with `poetry run pytest --cov-config=.coveragerc`, which will generate a nice code coverage report in HTML in the `./htmlcov` folder. Since we will probably support several version of eScriptorium you will need to make sure that the line `registry.gitlab.com/scripta/escriptorium:latest` in `escriptorium_docker/docker-compose.yml` points to the correct escriptorium image (in place of `:latest`).
 
 ## Uploading to Pypi
 
@@ -78,9 +78,11 @@ You should create a new git tag and push it after you publish:
     git tag v0.0.15
     git push --tags
 
-
 ## Docker
-The escriptorium-pgp-setup repository contains instructions on running a local copy of e-scriptorium. It is WSL oriented, but should work on other environments as well.
+
+This repo contains a working docker-compose setup in `escriptorium_docker` (go there and run `docker-compose up -d`). The account settings there (see `escriptorium_docker/variables.env`) match those in `.env`. This docker-compose application must be running for the escriptorium tests to run and is generally useful for safe testing of the connector without damaging a production instance of eScriptorium.
+
+The escriptorium-pgp-setup repository contains WSL oriented instructions on running a local copy of e-scriptorium.
 
 ## Version History
 

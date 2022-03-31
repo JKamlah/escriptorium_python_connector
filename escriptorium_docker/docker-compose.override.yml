@@ -1,48 +1,161 @@
 version: "3.9"
 
 services:
-  web:
-    &web
-    restart: always
-    depends_on:
-      - "db"
+    ### to customize the homepage, uncomment this
+    #app:
+      # volumes:
+      #   - $PWD/app/homepage
 
-  channelserver:
-    <<: *web
+    web: &web
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
-  db:
-    restart: always
-    ports:
-      - 127.0.0.1:2345:5432
+    channelserver:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
 
-  redis:
-    restart: always
-    ports:
-      - 127.0.0.1:9736:6379
+    db:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == db0
 
-  nginx:
-    restart: always
-    ports:
-      - "8000:80"
-    depends_on:
-      - "web"
+      # For development purposes, expose db on localhost
+      # ports:
+      #   - 127.0.0.1:5432:5432
 
-  flower:
-    restart: always
+    redis:
+      restart: always
 
-  celery-main:
-    &celery
-    restart: always
-    depends_on:
-      - "db"
-      - "redis"
-      - "web"
+      # For development purposes, expose redis on localhost
+      # ports:
+      #   - 127.0.0.1:6379:6379
 
-  celery-low-priority:
-    <<: *celery
+    # uncomment this in conjunction with DISABLE_ELASTICSEARCH to enable the search
+    # elasticsearch:
+    #   restart: always
+    #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    #   environment:
+    #     - cluster.name=docker-cluster
+    #     - bootstrap.memory_lock=true
+    #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    #     - discovery.type=single-node
+    #   volumes:
+    #     - esdata/:/usr/share/elasticsearch/data
 
-  celery-live:
-    <<: *celery
+    nginx:
+      restart: always
+      ports:
+        - "8989:80"
+      # - "443:443"
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+      ### To enable SSL, generate keys (eg with letsencrypt/certbot)
+      ### copy nginx/ssl_certificates.conf_example and edit it
+      ## if need be to correspond to the volume below
+      ### and uncomment this block and the port 443
+      # volumes:
+      # - type: bind
+      #   source: $PWD/nginx/ssl.conf
+      #   target: /etc/nginx/conf.d/nginx.conf
+      # - type: bind
+      #   source: $PWD/nginx/ssl_certificates.conf
+      #   target: /etc/nginx/conf.d/ssl_certificates.conf
+      # - $PWD/nginx/certs/:/etc/certs/
+
+    flower:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == frontend0
+
+    celery-main:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute0
+      #   resources:
+      #     limits:
+      #       cpus: '6'
+      #       memory: 15g
+      #     reservations:
+      #       memory: 4g
+
+    celery-low-priority:
+      restart: always
+      # deploy:
+      #   mode: replicated
+      #   replicas: 1
+      #   placement:
+      #     constraints:
+      #       - node.hostname == compute1
+      #   resources:
+      #     limits:
+      #       cpus: '2'
+      #       memory: 15g
+      #     reservations:
+      #       memory: 1g
+
+    # celery-gpu:
+    #   restart: always
+    prometheus:
+      image: prom/prometheus:v2.1.0
+      volumes:
+        - ./prometheus/:/etc/prometheus/
+        - prometheus_data:/prometheus
+      command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+        - '--web.console.templates=/usr/share/prometheus/consoles'
+      ports:
+        - 9090:9090
+    #  links:
+    #    - alertmanager:alertmanager
+
+    alertmanager:
+      image: prom/alertmanager:v0.18.0
+      deploy:
+        replicas: 1
+      volumes:
+        - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+        - ./prometheus/email.tmpl:/etc/alertmanager/email.tmpl
+      command:
+        - '--config.file=/etc/alertmanager/alertmanager.yml'
+        - '--storage.path=/alertmanager'
+        - '--log.level=debug'
+
+    container-exporter:
+      image: prom/container-exporter
+      volumes:
+        - /sys/fs/cgroup:/cgroup
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - 9104:9104
 
 volumes:
   static:
