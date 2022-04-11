@@ -35,8 +35,7 @@ def copy_documents(
     source_server: EscriptoriumConnector,
     destination_server: EscriptoriumConnector,
     documents: List[int],
-    project_name: str = None,
-    project_slug: str = None,
+    project_slug: str,
     ignore_images: bool = False,
     duplicate: bool = False,
 ):
@@ -52,11 +51,7 @@ def copy_documents(
         eScriptorium server to which the documents are being copied.
         documents (List[int]): A list of the document PKs on the source_server
         that should be copied to the destination_server.
-        project_name (str, optional): Name of the project on the destination_server 
-        where the documents shouldbe copied. Defaults to "duplicates" 
-        (please enter project_name or project_slug, not both).
         project_slug (str, optional): Slug for the project on the destination_server 
-        (please enter project_name or project_slug, not both).
         ignore_images (bool, optional): Whether or not to copy images from the
         source_server to the destination_server. Defaults to False.
         duplicate (bool, optional): Whether or not the documents are being
@@ -67,7 +62,6 @@ def copy_documents(
         source_server,
         destination_server,
         documents,
-        project_name,
         project_slug,
         ignore_images,
         duplicate,
@@ -79,8 +73,7 @@ def copy_documents_monitored(
     source_server: EscriptoriumConnector,
     destination_server: EscriptoriumConnector,
     documents: List[int],
-    project_name: str = None,
-    project_slug: str = None,
+    project_slug: str,
     ignore_images: bool = False,
     duplicate: bool = False,
 ):
@@ -98,11 +91,7 @@ def copy_documents_monitored(
         eScriptorium server to which the documents are being copied.
         documents (List[int]): A list of the document PKs on the source_server
         that should be copied to the destination_server.
-        project_name (str, optional): Name of the project on the destination_server
-        where the documents shouldbe copied. Defaults to "duplicates" 
-        (please enter project_name or project_slug, not both).
         project_slug (str, optional): Slug for the project on the destination_server 
-        (please enter project_name or project_slug, not both).
         ignore_images (bool, optional): Whether or not to copy images from the
         source_server to the destination_server. Defaults to False.
         duplicate (bool, optional): Whether or not the documents are being
@@ -121,7 +110,6 @@ def copy_documents_monitored(
         source_server,
         destination_server,
         documents,
-        project_name,
         project_slug,
         ignore_images,
         duplicate,
@@ -163,8 +151,7 @@ def copy_documents_generator(
     source_server: EscriptoriumConnector,
     destination_server: EscriptoriumConnector,
     documents: List[int],
-    project_name: str = None,
-    project_slug: str = None,
+    project_slug: str,
     ignore_images: bool = False,
     duplicate: bool = False,
 ) -> Generator[CopyProgress, None, None]:
@@ -184,21 +171,14 @@ def copy_documents_generator(
         eScriptorium server to which the documents are being copied.
         documents (List[int]): A list of the document PKs on the source_server
         that should be copied to the destination_server.
-        project_name (str, optional): Name of the project on the destination_server
-        where the documents shouldbe copied. Defaults to "duplicates" 
-        (please enter project_name or project_slug, not both).
         project_slug (str, optional): Slug for the project on the destination_server 
-        (please enter project_name or project_slug, not both).
         ignore_images (bool, optional): Whether or not to copy images from the
         source_server to the destination_server. Defaults to False.
         duplicate (bool, optional): Whether or not the documents are being
         duplicated on the same eScriptorium server. Defaults to False.
     """
-    if project_name is not None and project_slug is not None:
-        raise Exception("Must provide either a project_name or a project_slug, not both")
-    
-    if project_name is None and project_slug is None:
-        project_name = "duplicates"
+    if project_slug is None or project_slug == "":
+        raise Exception("Must provide a project_slug")
     
     total_steps = 9
     current_step = 0
@@ -218,13 +198,14 @@ def copy_documents_generator(
 
     yield CopyProgress(current_step, total_steps, 1, 2, None)
     dest_projects = destination_server.get_projects().results
-    matching_projects = [x for x in dest_projects if x.name == project_name] if project_slug is None else [x for x in dest_projects if x.slug == project_slug]
+    matching_projects = [x for x in dest_projects if x.slug == project_slug]
     if len(matching_projects) == 0:
-        new_project = PostProject(
-            name=project_name or project_slug
-        )
-        new_project = destination_server.create_project(new_project)
-        destination_server.set_connector_project_by_pk(new_project.id)
+        raise Exception(f"""Could not find the project {project_slug} on the destination server""")
+        #new_project = PostProject(
+        #    name=project_name or project_slug
+        #)
+        #new_project = destination_server.create_project(new_project)
+        #destination_server.set_connector_project_by_pk(new_project.id)
     
     if len(matching_projects) > 0:
         destination_server.set_connector_project_by_pk(matching_projects[0].id)
@@ -245,7 +226,7 @@ def copy_documents_generator(
         doc_name = source_doc.name + "_duplicate" if duplicate else source_doc.name
 
         if source_doc.name in [
-            x.name for x in dest_docs if (x.project == project_name) or x.project == ""
+            x.name for x in dest_docs if (x.project == project_slug) or x.project == ""
         ]:
             logging.info(f"{source_doc.name} is already present on destination")
             yield CopyProgress(current_step, total_steps, idx, len(source_docs), None)
@@ -256,7 +237,7 @@ def copy_documents_generator(
         )
         new_doc_data = PostDocument(
             name=doc_name,
-            project=project_name,
+            project=project_slug,
             main_script=source_doc.main_script,
             read_direction=source_doc.read_direction,
             line_offset=source_doc.line_offset,
@@ -300,7 +281,7 @@ def copy_documents_generator(
             continue
 
         dest_doc = [
-            x for x in dest_docs if x.name == src_doc.name and x.project == project_name
+            x for x in dest_docs if x.name == src_doc.name and x.project == project_slug
         ]
         if len(dest_doc) == 0:
             logging.error(f"Document {src_doc.name} does not exist on destination")
@@ -373,7 +354,7 @@ def copy_documents_generator(
         zip(source_docs, src_region_types, src_line_types)
     ):
         dest_doc = [
-            x for x in dest_docs if x.name == src_doc.name and x.project == project_name
+            x for x in dest_docs if x.name == src_doc.name and x.project == project_slug
         ]
         if len(dest_doc) == 0:
             logging.error(f"Document {src_doc.name} does not exist on destination")
@@ -424,7 +405,7 @@ def copy_documents_generator(
     count = 0
     for src_doc, (src_transcriptions, src_parts) in zip(source_docs, transcriptions):
         dest_doc = [
-            x for x in dest_docs if x.name == src_doc.name and x.project == project_name
+            x for x in dest_docs if x.name == src_doc.name and x.project == project_slug
         ]
         if len(dest_doc) == 0:
             logging.error(f"Document {src_doc.name} does not exist on destination")
