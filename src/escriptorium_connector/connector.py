@@ -135,7 +135,7 @@ class EscriptoriumConnector:
         api_key: str = None,
         api_url: str = None,
         project: str = None,
-        verify_ssl: bool = True
+        verify_ssl: bool = True,
     ):
         """Simplified access to eScriptorium
 
@@ -184,11 +184,15 @@ class EscriptoriumConnector:
 
         # Raise an error if no authentication is provided
         if username is None and password is None and api_key is None:
-            raise EscriptoriumonnectorInitError("Must either init with a username+password or an api_key")
+            raise EscriptoriumonnectorInitError(
+                "Must either init with a username+password or an api_key"
+            )
 
         # Raise an error when authenticating with username+password, but one or the other is missing
         if api_key is None and (username is None or password is None):
-            raise EscriptoriumonnectorInitError("Must either init with a username+password or an api_key")
+            raise EscriptoriumonnectorInitError(
+                "Must either init with a username+password or an api_key"
+            )
 
         # Setup retries and timeouts for HTTP requests
         retry_strategy = Retry(
@@ -246,16 +250,18 @@ class EscriptoriumConnector:
                 "csrfmiddlewaretoken": self.csrfmiddlewaretoken,
             }
             result = self.http.post(
-                login_url, data=payload, headers={**self.http.headers, "referer": login_url}
+                login_url,
+                data=payload,
+                headers={**self.http.headers, "referer": login_url},
             )
             self.cookie = "; ".join(
                 [f"""{k}={v}""" for k, v in self.http.cookies.get_dict().items()]
             )
             result = self.http.get(self.base_url + "profile/apikey/")
             tree = html.fromstring(result.text)
-            api_key = list(set(tree.xpath("//button[@id='api-key-clipboard']/@data-key")))[
-                0
-            ]
+            api_key = list(
+                set(tree.xpath("//button[@id='api-key-clipboard']/@data-key"))
+            )[0]
         self.http.headers.update({"Authorization": f"""Token {api_key}"""})
 
         self.project_name = project
@@ -634,7 +640,11 @@ class EscriptoriumConnector:
             raise Exception("Must use websockets to download ALTO exports")
 
         download_link = None
-        ws = TimeoutWebsocket(sslopt={"cert_reqs": ssl.CERT_NONE}) if self.http.verify is False else TimeoutWebsocket()
+        ws = (
+            TimeoutWebsocket(sslopt={"cert_reqs": ssl.CERT_NONE})
+            if self.http.verify is False
+            else TimeoutWebsocket()
+        )
         ws.connect(
             f"{self.base_url.replace('http', 'ws')}ws/notif/",
             cookie=self.cookie,
@@ -648,7 +658,8 @@ class EscriptoriumConnector:
                 "file_format": output_type,
                 "region_types": [
                     x.pk for x in self.get_document_region_types(document_pk)
-                ]+["Undefined","Orphan"],
+                ]
+                + ["Undefined", "Orphan"],
                 "document": document_pk,
                 "parts": part_pk,
             },
@@ -946,12 +957,12 @@ class EscriptoriumConnector:
         self, doc_pk: int, region_type_pks: List[int]
     ):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[1]
+        ontology_form = forms[0]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
