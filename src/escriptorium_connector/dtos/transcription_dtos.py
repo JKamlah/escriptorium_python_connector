@@ -6,6 +6,13 @@ from dataclasses import field
 
 
 @dataclass(init=True, frozen=True)
+class CharacterGraph:
+    c: str
+    poly: List[List[int]]
+    confidence: float
+
+
+@dataclass(init=True, frozen=True)
 class PostAbbreviatedTranscription:
     name: str
 
@@ -21,7 +28,7 @@ class PostTranscription:
     line: int
     transcription: int
     content: str
-    graphs: Union[str, None] = None
+    graphs: List[CharacterGraph] = field(default_factory=list)
 
 
 @dataclass(init=True, frozen=True)
@@ -50,7 +57,7 @@ class GetTranscription:
     version_author: str
     version_source: str
     version_updated_at: datetime
-    graphs: Union[str, None] = None
+    graphs: List[CharacterGraph] = field(default_factory=list)
 
 
 @dataclass

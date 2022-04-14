@@ -41,6 +41,7 @@ from .region_dtos import (
 )
 
 from .transcription_dtos import (
+    CharacterGraph,
     GetAbbreviatedTranscription,
     PostAbbreviatedTranscription,
     GetTranscriptions,

@@ -9,6 +9,8 @@ from typing import Tuple, Union
 import pkg_resources
 from pathlib import Path
 
+from escriptorium_connector.dtos.transcription_dtos import GetAbbreviatedTranscription
+
 sys.path.append("../src")
 from escriptorium_connector import EscriptoriumConnector
 from escriptorium_connector.dtos import (
@@ -19,6 +21,9 @@ from escriptorium_connector.dtos import (
     PostPart,
     ReadDirection,
     LineOffset,
+    PostLine,
+    GetLine,
+    PostAbbreviatedTranscription,
 )
 
 load_dotenv()
@@ -86,6 +91,9 @@ class PrepForDocumentTest(object):
     def __init__(self, doc_name: Union[str, None] = None):
         # auto-create the connector and the document
         self.connector = get_connector()
+        self._make_doc(doc_name)
+
+    def _make_doc(self, doc_name):
         doc_name = doc_name if doc_name is not None else "test-" + get_random_string(6)
         self.new_doc = create_document(self.connector, doc_name)
 
@@ -103,7 +111,7 @@ class PrepForDocumentTest(object):
             pass
 
 
-class PrepForPartTest(object):
+class PrepForPartTest(PrepForDocumentTest):
     def __init__(
         self,
         doc_name: Union[str, None] = None,
@@ -114,9 +122,16 @@ class PrepForPartTest(object):
     ):
         # auto-create the connector and the document
         self.connector = get_connector()
-        doc_name = (
-            doc_name if doc_name is not None else "test-doc-" + get_random_string(6)
-        )
+        self._make_part(doc_name, part_name, part_source, image_name, filedata)
+
+    def _make_part(
+        self,
+        doc_name: Union[str, None],
+        part_name: Union[str, None],
+        part_source: Union[str, None],
+        image_name: Union[str, None],
+        filedata: Union[bytes, None],
+    ):
         part_name = (
             part_name if part_name is not None else "test-part-" + get_random_string(6)
         )
@@ -135,7 +150,7 @@ class PrepForPartTest(object):
                 pkg_resources.resource_filename("tests.resources", image_name)
             ).read_bytes()
         )
-        self.new_doc = create_document(self.connector, doc_name)
+        self._make_doc(doc_name)
         new_part_info = PostPart(name=part_name, typology=None, source=part_source)
         self.new_part = self.connector.create_document_part(
             self.new_doc.pk, new_part_info, image_name, filedata
@@ -144,12 +159,151 @@ class PrepForPartTest(object):
     def __enter__(self) -> Tuple[EscriptoriumConnector, GetDocument, GetPart]:
         return (self.connector, self.new_doc, self.new_part)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            # if document still exists, delete it
-            if self.new_doc is not None:
-                current_doc = self.connector.get_document(self.new_doc.pk)
-                self.connector.delete_document(current_doc.pk)
-        except:
-            # if it is gone, do nothing
-            pass
+
+class PrepForLineTest(PrepForPartTest):
+    def __init__(
+        self,
+        doc_name: Union[str, None] = None,
+        part_name: Union[str, None] = None,
+        part_source: Union[str, None] = None,
+        image_name: Union[str, None] = None,
+        filedata: Union[bytes, None] = None,
+        line_name: Union[str, None] = None,
+        line_typology: Union[int, None] = None,
+    ):
+        # auto-create the connector and the document
+        self.connector = get_connector()
+        self._make_line(
+            doc_name,
+            part_name,
+            part_source,
+            image_name,
+            filedata,
+            line_name,
+            line_typology,
+        )
+
+    def _make_line(
+        self,
+        doc_name: Union[str, None],
+        part_name: Union[str, None],
+        part_source: Union[str, None],
+        image_name: Union[str, None],
+        filedata: Union[bytes, None],
+        line_name: Union[str, None],
+        line_typology: Union[int, None],
+    ):
+        self._make_part(doc_name, part_name, part_source, image_name, filedata)
+        document_line_typologies = self.connector.get_document_line_types(
+            self.new_doc.pk
+        )
+        matching_typologies = [
+            x
+            for x in document_line_typologies
+            if line_typology is not None and x.pk == line_typology
+        ]
+        if len(matching_typologies) == 0 and len(document_line_typologies) == 0:
+            _ = self.connector.create_document_line_type(
+                self.new_doc.pk, "test_line_type"
+            )
+            document_line_typologies = self.connector.get_document_line_types(
+                self.new_doc.pk
+            )
+        line_typology = (
+            line_typology
+            if line_typology is not None and len(matching_typologies) > 0
+            else document_line_typologies[0].pk
+        )
+        external_id = line_name if line_name is not None else "test_line"
+
+        new_line_info = PostLine(
+            document_part=self.new_part.pk,
+            external_id=external_id,
+            region=None,
+            baseline=[[10, 10], [40, 10]],
+            mask=[[0, 0], [0, 20], [50, 20], [50, 0], [0, 0]],
+            typology=document_line_typologies[0].pk,
+        )
+        self.new_line = self.connector.create_document_part_line(
+            self.new_doc.pk,
+            self.new_part.pk,
+            new_line_info,
+        )
+
+    def __enter__(self) -> Tuple[EscriptoriumConnector, GetDocument, GetPart, GetLine]:
+        return (self.connector, self.new_doc, self.new_part, self.new_line)
+
+
+class PrepForTranscriptionTest(PrepForLineTest):
+    def __init__(
+        self,
+        doc_name: Union[str, None] = None,
+        part_name: Union[str, None] = None,
+        part_source: Union[str, None] = None,
+        image_name: Union[str, None] = None,
+        filedata: Union[bytes, None] = None,
+        line_name: Union[str, None] = None,
+        line_typology: Union[int, None] = None,
+        transcription_name: Union[str, None] = None,
+    ):
+        # auto-create the connector and the document
+        self.connector = get_connector()
+        self._make_transcription(
+            doc_name,
+            part_name,
+            part_source,
+            image_name,
+            filedata,
+            line_name,
+            line_typology,
+            transcription_name,
+        )
+
+    def _make_transcription(
+        self,
+        doc_name: Union[str, None],
+        part_name: Union[str, None],
+        part_source: Union[str, None],
+        image_name: Union[str, None],
+        filedata: Union[bytes, None],
+        line_name: Union[str, None],
+        line_typology: Union[int, None],
+        transcription_name: Union[str, None],
+    ):
+        self._make_line(
+            doc_name,
+            part_name,
+            part_source,
+            image_name,
+            filedata,
+            line_name,
+            line_typology,
+        )
+        transcription_name = (
+            transcription_name
+            if transcription_name is not None
+            else "test_transcription"
+        )
+        new_transcription_layer_data = PostAbbreviatedTranscription(
+            name=transcription_name
+        )
+        self.new_trans_layer = self.connector.create_document_transcription(
+            self.new_doc.pk, new_transcription_layer_data
+        )
+
+    def __enter__(
+        self,
+    ) -> Tuple[
+        EscriptoriumConnector,
+        GetDocument,
+        GetPart,
+        GetLine,
+        GetAbbreviatedTranscription,
+    ]:
+        return (
+            self.connector,
+            self.new_doc,
+            self.new_part,
+            self.new_line,
+            self.new_trans_layer,
+        )
