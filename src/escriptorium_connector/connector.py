@@ -813,12 +813,12 @@ class EscriptoriumConnector:
 
     def create_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -957,12 +957,12 @@ class EscriptoriumConnector:
         self, doc_pk: int, region_type_pks: List[int]
     ):
         # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -1007,13 +1007,13 @@ class EscriptoriumConnector:
     def delete_document_region_types_by_pk(
         self, doc_pk: int, region_type_pks: List[int]
     ):
-        # Get the current ontology information
-        ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
+        # Get the current ontology information    
+        ontology_url = f"{self.base_url}document/{doc_pk}/edit/"
         forms = get_all_forms(
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = forms[1]
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
