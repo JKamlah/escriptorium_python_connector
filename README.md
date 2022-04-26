@@ -86,5 +86,6 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.1.18 - Reintroduce the corrections 0.1.9, which were accidentally removed from 0.1.17
 * 0.1.11 - allow the owner field of the project DTO to be a string (as is with more recent e-scriptoirum versions)
 * 0.1.9 - update the convenience function copy_documents to work with the latest e-scriptorium
