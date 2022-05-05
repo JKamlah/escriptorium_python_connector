@@ -13,6 +13,7 @@ from io import BytesIO
 from typing import Any, Tuple, Union, List, Dict, Type, TypeVar
 from lxml import html
 import requests
+from escriptorium_connector.dtos.line_dtos import PostMoveLine, PostMoveLines
 from requests.packages.urllib3.util import Retry
 import logging
 import json
@@ -326,7 +327,18 @@ class EscriptoriumConnector:
     ) -> T:
         r_json = response.json()
         try:
-            obj = return_cls(**r_json)
+            # Some endpoints return an unnamed list, which needs to be treated in a special way.
+            # First, we make sure this is a list
+            is_return_cls_list = getattr(return_cls, '__origin__', None) == list  # Non generic types have no __origin__ property
+            is_response_list = type(r_json) == list
+            if is_return_cls_list and is_response_list:
+                # Both types are lists (if only one of them is a list, the else clause will cause a TypeError, which is what we want anyway)
+
+                # We need to validate each entry of the response
+                entry_type = return_cls.__args__[0]  # This is the expected list entry type
+                obj = list([entry_type(**j) for j in r_json]) 
+            else:
+                obj = return_cls(**r_json)
         except SyntaxError as e:
             raise EscriptoriumConnectorDtoSyntaxError(
                 e, response.status_code, url, response.text
@@ -771,6 +783,14 @@ class EscriptoriumConnector:
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/{line_pk}"
         )
 
+    def move_lines(
+        self, doc_pk: int, part_pk: int, lines: PostMoveLines
+    ) -> List[PostMoveLine]: 
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/lines/move/",
+            asdict(lines),
+            List[PostMoveLine]
+        )
     # endregion
 
     # region Line Type API

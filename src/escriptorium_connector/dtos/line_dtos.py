@@ -14,7 +14,6 @@ class PostLine:
     mask: Union[List[List[int]], None] = None
     typology: Union[int, None] = None
 
-
 @dataclass(init=True, frozen=True)
 class PutLine:
     document_part: int
@@ -57,3 +56,12 @@ class GetLineType:
 @dataclass
 class GetLineTypes(PagenatedResponse):
     results: List[GetLineType] = field(default_factory=list)
+
+@dataclass(init=True, frozen=True)
+class PostMoveLine:
+    pk: int
+    order: int
+
+@dataclass(init=True, frozen=True)
+class PostMoveLines:
+    lines: List[PostMoveLine] = field(default_factory=list)
