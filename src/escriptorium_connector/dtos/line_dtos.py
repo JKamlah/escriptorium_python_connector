@@ -32,7 +32,7 @@ class GetLine:
     order: int
     region: Union[int, None]
     baseline: List[List[int]]
-    mask: List[List[int]]
+    mask: Union[List[List[int]], None]
     typology: Union[int, None] = None
     transcriptions: Union[List[GetTranscription], None] = None
 
@@ -65,3 +65,8 @@ class PostMoveLine:
 @dataclass(init=True, frozen=True)
 class PostMoveLines:
     lines: List[PostMoveLine] = field(default_factory=list)
+
+@dataclass(init=True, frozen=True)
+class PutBulkUpdateLines:
+    status: str
+    lines: list[GetLine] = field(default_factory=list)

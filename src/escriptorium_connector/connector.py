@@ -13,7 +13,7 @@ from io import BytesIO
 from typing import Any, Tuple, Union, List, Dict, Type, TypeVar
 from lxml import html
 import requests
-from escriptorium_connector.dtos.line_dtos import PostMoveLine, PostMoveLines
+from escriptorium_connector.dtos.line_dtos import PostMoveLine, PostMoveLines, PutBulkUpdateLines
 from requests.packages.urllib3.util import Retry
 import logging
 import json
@@ -791,6 +791,21 @@ class EscriptoriumConnector:
             asdict(lines),
             List[PostMoveLine]
         )
+
+    def bulk_update_lines(self, doc_pk: int, park_pk: int, lines:list[GetLine], fields: list[str]) -> list[GetLine]:
+        if 'pk' not in fields:
+            fields.append('pk')
+
+        line_dicts = [{ fld: getattr(line, fld) for fld in fields } for line in lines]  # Will raise a key error if fields has an incorrect field name
+
+        
+        result = self.__put_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{park_pk}/lines/bulk_update/",
+            dict(lines=line_dicts),
+            PutBulkUpdateLines)
+
+        return result.lines
+
     # endregion
 
     # region Line Type API

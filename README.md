@@ -86,6 +86,8 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.1.21 - add bulk_update of lines
+         - allow retrieved lines to have no mask
 * 0.1.20 - add support for the move lines endpoint (for reordering lines)
 * 0.1.11 - allow the owner field of the project DTO to be a string (as is with more recent e-scriptoirum versions)
 * 0.1.9 - update the convenience function copy_documents to work with the latest e-scriptorium
