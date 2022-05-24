@@ -21,6 +21,7 @@ class PostAbbreviatedTranscription:
 class GetAbbreviatedTranscription:
     pk: int
     name: str
+    archived: bool = False
 
 
 @dataclass(init=True, frozen=True)

@@ -86,6 +86,7 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.1.22 - Add an optional `archived` field to GetAbbreviatedTranscription
 * 0.1.21 - add bulk_update of lines
          - allow retrieved lines to have no mask
 * 0.1.20 - add support for the move lines endpoint (for reordering lines)

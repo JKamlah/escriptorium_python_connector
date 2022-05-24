@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "escriptorium-connector"
-version = "0.1.21"
+version = "0.1.22"
 description = "This simple python package makes it easy to connect to an eScriptorium instance and to work with the data there."
 authors = ["Bronson Brown-deVost <bronsonbdevost@gmail.com>"]
 license = "MIT"
