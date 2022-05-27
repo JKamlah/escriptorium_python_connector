@@ -69,4 +69,4 @@ class PostMoveLines:
 @dataclass(init=True, frozen=True)
 class PutBulkUpdateLines:
     status: str
-    lines: list[GetLine] = field(default_factory=list)
+    lines: List[GetLine] = field(default_factory=list)
