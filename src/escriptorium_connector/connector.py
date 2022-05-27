@@ -792,7 +792,7 @@ class EscriptoriumConnector:
             List[PostMoveLine]
         )
 
-    def bulk_update_lines(self, doc_pk: int, park_pk: int, lines:list[GetLine], fields: list[str]) -> list[GetLine]:
+    def bulk_update_lines(self, doc_pk: int, park_pk: int, lines:List[GetLine], fields: List[str]) -> List[GetLine]:
         if 'pk' not in fields:
             fields.append('pk')
 
