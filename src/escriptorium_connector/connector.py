@@ -678,7 +678,7 @@ class EscriptoriumConnector:
             as_form_data=True,
         )
 
-        message = ws.recv(30)
+        message = ws.recv(120)
         ws.close()
         logging.debug(message)
         msg = json.loads(message)
