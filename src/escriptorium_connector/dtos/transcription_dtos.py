@@ -58,7 +58,7 @@ class GetTranscription:
     version_author: str
     version_source: str
     version_updated_at: datetime
-    graphs: List[CharacterGraph] = field(default_factory=list)
+    graphs: Union[None, List[CharacterGraph]] = field(default_factory=list)
 
 
 @dataclass
