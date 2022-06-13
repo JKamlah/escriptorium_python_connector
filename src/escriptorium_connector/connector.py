@@ -81,6 +81,7 @@ from escriptorium_connector.dtos import (
     GetTranscription,
     GetTranscriptions,
     PostTranscription,
+    PutTranscription,
 )
 
 # endregion
@@ -138,6 +139,7 @@ class EscriptoriumConnector:
         api_url: str = None,
         project: str = None,
         verify_ssl: bool = True,
+        http_read_timeout: int = None
     ):
         """Simplified access to eScriptorium
 
@@ -211,7 +213,7 @@ class EscriptoriumConnector:
             ],
             backoff_factor=1,
         )
-        adapter = TimeoutHTTPAdapter(max_retries=retry_strategy)
+        adapter = TimeoutHTTPAdapter(max_retries=retry_strategy, timeout=http_read_timeout)
 
         def assert_status_hook(response, *args, **kwargs):
             try:
@@ -1166,7 +1168,7 @@ class EscriptoriumConnector:
     ) -> None:
         body = { 'lines': transcription_ids }
         self.__post_url(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", body
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/bulk_delete/", body
         )
 
         # Return nothing. The http response hook will raise an exception if an error is returned
@@ -1178,9 +1180,18 @@ class EscriptoriumConnector:
             'lines': transcriptions
         }
         return self.__post_url_serialized(
-            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", body, PostBulkCreateTranscriptions
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/bulk_create/", body, PostBulkCreateTranscriptions
         )
 
+    def bulk_update_transcriptions(
+        self, doc_pk: int, part_pk: int, transcriptions: List[PutTranscription]
+    ) -> List[GetTranscription]:
+        body = {
+            'lines': transcriptions
+        }
+        return self.__put_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/bulk_update/", body, List[GetTranscription]
+        )
     # endregion
 
     # region Annotation API

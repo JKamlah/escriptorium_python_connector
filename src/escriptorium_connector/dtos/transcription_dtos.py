@@ -32,6 +32,14 @@ class PostTranscription:
     graphs: List[CharacterGraph] = field(default_factory=list)
 
 @dataclass(init=True, frozen=True)
+class PutTranscription:
+    line: int
+    pk: int
+    transcription: int
+    content: str
+    graphs: List[CharacterGraph] = field(default_factory=list)
+
+@dataclass(init=True, frozen=True)
 class GetVersionData:
     graphs: Union[None, List[List[int]]]
     content: str
@@ -66,4 +74,5 @@ class GetTranscriptions(PagenatedResponse):
 
 @dataclass(init=True, frozen=True)
 class PostBulkCreateTranscriptions:
+    status: str
     lines: List[GetTranscription] = field(default_factory=list)

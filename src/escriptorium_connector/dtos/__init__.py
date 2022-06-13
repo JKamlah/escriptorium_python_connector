@@ -46,6 +46,7 @@ from .transcription_dtos import (
     PostAbbreviatedTranscription,
     GetTranscriptions,
     GetTranscription,
+    PutTranscription,
     PostTranscription,
 )
 
