@@ -14,6 +14,7 @@ from typing import Any, Tuple, Union, List, Dict, Type, TypeVar
 from lxml import html
 import requests
 from escriptorium_connector.dtos.line_dtos import PostMoveLine, PostMoveLines, PutBulkUpdateLines
+from escriptorium_connector.dtos.transcription_dtos import PostBulkCreateTranscriptions
 from requests.packages.urllib3.util import Retry
 import logging
 import json
@@ -1158,6 +1159,26 @@ class EscriptoriumConnector:
         return self.__get_paginated_response(
             f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/transcriptions/",
             GetTranscriptions,
+        )
+
+    def bulk_delete_transcriptions(
+        self, doc_pk: int, part_pk: int, transcription_ids: List[int]
+    ) -> None:
+        body = { 'lines': transcription_ids }
+        self.__post_url(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", body
+        )
+
+        # Return nothing. The http response hook will raise an exception if an error is returned
+
+    def bulk_create_transcriptions(
+        self, doc_pk: int, part_pk: int, transcriptions: List[PostTranscription]
+    ) -> PostBulkCreateTranscriptions:
+        body = {
+            'lines': transcriptions
+        }
+        return self.__post_url_serialized(
+            f"{self.api_url}documents/{doc_pk}/parts/{part_pk}/", body, PostBulkCreateTranscriptions
         )
 
     # endregion
