@@ -54,6 +54,7 @@ class GetPart:
     recoverable: bool
     transcription_progress: int
     source: str
+    max_avg_confidence: Union[float, None] = None
     workflow: Union[Workflow, None] = None
     regions: Union[List[GetRegion], None] = None
     lines: Union[List[GetLine], None] = None

@@ -22,6 +22,7 @@ class GetAbbreviatedTranscription:
     pk: int
     name: str
     archived: bool = False
+    avg_confidence: Union[float, None] = None
 
 
 @dataclass(init=True, frozen=True)
@@ -43,6 +44,7 @@ class PutTranscription:
 class GetVersionData:
     graphs: Union[None, List[List[int]]]
     content: str
+    avg_confidence: Union[float, None] = None
 
 
 @dataclass(init=True, frozen=True)
@@ -66,6 +68,7 @@ class GetTranscription:
     version_source: str
     version_updated_at: datetime
     graphs: Union[None, List[CharacterGraph]] = field(default_factory=list)
+    avg_confidence: Union[float, None] = None
 
 
 @dataclass
