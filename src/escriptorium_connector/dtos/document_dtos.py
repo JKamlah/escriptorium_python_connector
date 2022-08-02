@@ -56,7 +56,7 @@ class GetDocument:
     valid_block_types: List[GetRegionType] = field(default_factory=list)
     valid_line_types: List[GetLineType] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
-
+    show_confidence_viz: bool = False
 
 @dataclass
 class GetDocuments(PagenatedResponse):
