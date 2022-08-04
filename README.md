@@ -86,6 +86,8 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.2.2 - Support new escriptorium fields
+        - Deprecation warning on the copy-documents module.
 * 0.2.0 - Add bulk transription operations.
         - Add a read timeout parameter to the connector
 * 0.1.28 - Increase websocket timeout when downloading large transcriptions

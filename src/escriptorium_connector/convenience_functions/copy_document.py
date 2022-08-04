@@ -1,3 +1,6 @@
+from warnings import warn
+warn("This module is deprecated. Please use the copy-document and copy-transcriptions utilities from the escriptorium_utils repository", stacklevel=2)
+
 from alive_progress import alive_bar
 from colorama import init, Fore, Style
 
