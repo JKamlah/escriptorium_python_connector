@@ -25,7 +25,7 @@ class PostRegion:
     document_part: int
     external_id: str
     box: List[List[int]]
-    typology: int
+    typology: Union[int, None]
 
 
 @dataclass(init=True, frozen=True)

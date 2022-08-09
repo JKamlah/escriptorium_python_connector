@@ -86,6 +86,7 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.2.3 - Allow creating regions with no type
 * 0.2.2 - Support new escriptorium fields
         - Deprecation warning on the copy-documents module.
 * 0.2.0 - Add bulk transription operations.
