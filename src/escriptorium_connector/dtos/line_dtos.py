@@ -52,6 +52,12 @@ class GetLineType:
     pk: int
     name: str
 
+@dataclass(init=True, frozen=True)
+class GetPartType:
+    pk: int
+    name: str
+
+
 
 @dataclass
 class GetLineTypes(PagenatedResponse):

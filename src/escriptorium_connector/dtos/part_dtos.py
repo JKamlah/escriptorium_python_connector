@@ -1,3 +1,4 @@
+from bisect import insort_right
 from dataclasses import field
 from escriptorium_connector.utils.pydantic_dataclass_fix import dataclass
 from typing import List, Union, Dict
@@ -41,6 +42,11 @@ class PutPart:
     source: str
 
 @dataclass(init=True, frozen=True)
+class GetPartMetadata:
+    pk: int
+    key: str
+    value: str
+@dataclass(init=True, frozen=True)
 class GetPart:
     pk: int
     name: str
@@ -55,11 +61,13 @@ class GetPart:
     transcription_progress: int
     source: str
     max_avg_confidence: Union[float, None] = None
+    comments: Union[str, None] = None
     workflow: Union[Workflow, None] = None
     regions: Union[List[GetRegion], None] = None
     lines: Union[List[GetLine], None] = None
     previous: Union[int, None] = None
     next: Union[int, None] = None
+    metadata: Union[List[GetPartMetadata], None] = None
 
 
 @dataclass

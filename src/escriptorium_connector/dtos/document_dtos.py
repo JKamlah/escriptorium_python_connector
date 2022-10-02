@@ -7,7 +7,7 @@ from datetime import datetime
 from escriptorium_connector.dtos.super_dtos import PagenatedResponse
 from escriptorium_connector.dtos.transcription_dtos import GetAbbreviatedTranscription
 from escriptorium_connector.dtos.region_dtos import GetRegionType
-from escriptorium_connector.dtos.line_dtos import GetLineType
+from escriptorium_connector.dtos.line_dtos import GetLineType, GetPartType
 
 
 class ReadDirection(str, Enum):
@@ -55,6 +55,7 @@ class GetDocument:
     transcriptions: List[GetAbbreviatedTranscription] = field(default_factory=list)
     valid_block_types: List[GetRegionType] = field(default_factory=list)
     valid_line_types: List[GetLineType] = field(default_factory=list)
+    valid_part_types: Union[List[GetPartType], None] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
     show_confidence_viz: bool = False
 
