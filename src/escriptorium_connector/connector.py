@@ -849,6 +849,15 @@ class EscriptoriumConnector:
     # already been created. The whole situation is quite poor right now and
     # awaiting a fix.
 
+    def get_ontology_form(self, forms):
+        # forms: ResultSet
+        for form in forms:
+            form_id = form.get('id')
+            if form_id == 'ontology-form':
+                ontology_form = form
+                return ontology_form
+        raise ValueError("ontology_form is not found")
+
     def create_document_line_types_by_pk(self, doc_pk: int, line_type_pks: List[int]):
         # Get the current ontology information
         ontology_url = f"{self.base_url}document/{doc_pk}/ontology/"
@@ -856,7 +865,7 @@ class EscriptoriumConnector:
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = self.get_ontology_form(forms)
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -903,7 +912,7 @@ class EscriptoriumConnector:
             ontology_url,
             self.http,
         )
-        ontology_form = forms[1]
+        ontology_form = self.get_ontology_form(forms)
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -1000,7 +1009,7 @@ class EscriptoriumConnector:
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = self.get_ontology_form(forms)
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
@@ -1051,7 +1060,7 @@ class EscriptoriumConnector:
             ontology_url,
             self.http,
         )
-        ontology_form = forms[0]
+        ontology_form = self.get_ontology_form(forms)
         form_details = get_form_details(ontology_form)
         data = {}
         # Copy all existing data
