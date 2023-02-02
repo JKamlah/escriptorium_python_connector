@@ -68,6 +68,7 @@ class GetPart:
     previous: Union[int, None] = None
     next: Union[int, None] = None
     metadata: Union[List[GetPartMetadata], None] = None
+    comments: Union[str, None] = None
 
 
 @dataclass
