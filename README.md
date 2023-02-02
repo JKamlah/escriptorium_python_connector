@@ -86,6 +86,7 @@ The escriptorium-pgp-setup repository contains WSL oriented instructions on runn
 
 ## Version History
 
+* 0.2.6 - Update DTOs, requirements
 * 0.2.5 - A better way for finding the ontology form when setting up line types.
 * 0.2.4 - Add a few more DTO fields. Remove automatic imports of the convenience functions.
 * 0.2.3 - Allow creating regions with no type

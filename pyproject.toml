@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "escriptorium-connector"
-version = "0.2.5"
+version = "0.2.6"
 description = "This simple python package makes it easy to connect to an eScriptorium instance and to work with the data there."
 authors = ["Bronson Brown-deVost <bronsonbdevost@gmail.com>"]
 license = "MIT"
@@ -15,7 +15,7 @@ packages = [
 python = "^3.7"
 websocket-client = "^1.2.1"
 lxml = "^4.6.4"
-requests = "^2.25.0"
+requests = "2.28.2"
 pydantic = "^1.8.2"
 alive-progress = "^2.1.0"
 colorama = "^0.4.4"
