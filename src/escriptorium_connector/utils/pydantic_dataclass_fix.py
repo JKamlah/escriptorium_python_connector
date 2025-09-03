@@ -4,7 +4,8 @@
 from typing import Any, Callable, Optional, Tuple, Type, TypeVar, Union, overload
 
 from pydantic.dataclasses import dataclass as pyd_dataclass
-from pydantic.fields import Field, FieldInfo
+from pydantic import Field
+from pydantic.fields import FieldInfo
 
 _T = TypeVar("_T")
 

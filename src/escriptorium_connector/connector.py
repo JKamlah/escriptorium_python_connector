@@ -19,7 +19,7 @@ from requests.packages.urllib3.util import Retry
 import logging
 import json
 import time
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 # endregion
 
