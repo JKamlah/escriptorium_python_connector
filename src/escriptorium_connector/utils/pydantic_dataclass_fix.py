@@ -63,4 +63,5 @@ def dataclass(
     frozen: bool = False,
     config: Type[Any] = None,
 ) -> Union[Callable[[Type[Any]], Type[_T]], Type[_T]]:
-    return pyd_dataclass(cls, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, config=config)  # type: ignore
+    # Pydantic v2 dataclass only supports init=False, so we ignore the init parameter
+    return pyd_dataclass(cls, init=False, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, config=config)  # type: ignore
