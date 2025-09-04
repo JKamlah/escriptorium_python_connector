@@ -139,7 +139,8 @@ class EscriptoriumConnector:
         api_url: str = None,
         project: str = None,
         verify_ssl: bool = True,
-        http_read_timeout: int = None
+        http_read_timeout: int = None,
+        instance_name: str = None
     ):
         """Simplified access to eScriptorium
 
@@ -202,15 +203,15 @@ class EscriptoriumConnector:
         retry_strategy = Retry(
             total=5,
             status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=[  # Used method_whitelist instead of methods_available for backwards compatability
-                "HEAD",
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS",
-                "TRACE",
-            ],
+            # method_whitelist=[  # Used method_whitelist instead of methods_available for backwards compatability
+            #     "HEAD",
+            #     "GET",
+            #     "POST",
+            #     "PUT",
+            #     "DELETE",
+            #     "OPTIONS",
+            #     "TRACE",
+            # ],
             backoff_factor=1,
         )
         adapter = TimeoutHTTPAdapter(max_retries=retry_strategy, timeout=http_read_timeout)
@@ -270,6 +271,7 @@ class EscriptoriumConnector:
 
         self.project_name = project
         self.project = self.get_project_pk_by_name(self.project_name)
+        self.instance_name = instance_name
 
     # endregion
 
@@ -340,8 +342,16 @@ class EscriptoriumConnector:
                 # We need to validate each entry of the response
                 entry_type = return_cls.__args__[0]  # This is the expected list entry type
                 obj = list([entry_type(**j) for j in r_json]) 
+            elif isinstance(return_cls, type) and issubclass(return_cls, GetDocuments):
+                from escriptorium_connector.dtos.document_dtos import parse_documents
+                obj = parse_documents(r_json)
+            elif isinstance(return_cls, type) and issubclass(return_cls, GetDocument):
+                from escriptorium_connector.dtos.document_dtos import parse_document
+                obj = parse_document(r_json)
             else:
                 obj = return_cls(**r_json)
+                
+                
         except SyntaxError as e:
             raise EscriptoriumConnectorDtoSyntaxError(
                 e, response.status_code, url, response.text
@@ -695,12 +705,27 @@ class EscriptoriumConnector:
                 f"Did not receive a link to download ALTO export for {document_pk}, {part_pk}, {transcription_pk}"
             )
             return None
-        alto_request = self.__get_url(f"{self.base_url}{download_link}")
 
-        if alto_request.status_code != 200:
-            return None
-
-        return alto_request.content
+        # The download link from the API can be inconsistent. We try two common URL formats.
+        urls_to_try = [
+            f"{self.base_url}{download_link.lstrip('/')}",
+            f"{self.base_url.replace(f'{self.instance_name}/', '') if self.instance_name else self.base_url}{download_link.lstrip('/')}"
+        ]
+        
+        for i, url in enumerate(urls_to_try):
+            try:
+                logging.debug(f"Attempting to download from URL {i+1}: {url}")
+                request = self.__get_url(url)
+                # The assert_status_hook will raise an exception for non-200 responses.
+                # If we get here, the download was successful.
+                return request.content
+            except BaseException as e:
+                logging.warning(f"URL {i+1} ({url}) failed.")
+        
+        logging.error(
+            f"All download attempts failed for {document_pk}, {part_pk}, {transcription_pk}"
+        )
+        return None
 
     def upload_part_transcription(
         self,
@@ -738,9 +763,35 @@ class EscriptoriumConnector:
     # region Image Download
 
     def get_image(self, img_url: str) -> bytes:
-        sanitized_img_url = img_url.lstrip("/")
-        r = self.__get_url(f"{self.base_url}{sanitized_img_url}")
-        return r.content
+        """
+        Downloads an image from a URL, trying multiple URL formats to handle 
+        inconsistencies in how image paths are returned by the API.
+        """
+        if not img_url:
+            raise ValueError("Cannot download image, img_url is empty.")
+
+        # The image URL from the API can be inconsistent. We try two common formats.
+        urls_to_try = [
+            f"{self.base_url}{img_url.lstrip('/')}",
+            f"{self.base_url.replace(f'{self.instance_name}/', '') if self.instance_name else self.base_url}{img_url.lstrip('/')}"
+        ]
+
+        last_exception = None
+        for i, url in enumerate(urls_to_try):
+            try:
+                logging.debug(f"Attempting to download image from URL {i+1}: {url}")
+                request = self.__get_url(url)
+                # The assert_status_hook will raise an exception for non-200 responses.
+                return request.content
+            except BaseException as e:
+                logging.warning(f"Image download from URL {i+1} ({url}) failed.")
+                last_exception = e
+
+        # If all attempts fail, raise an exception
+        raise EscriptoriumConnectorHttpError(
+            f"All image download attempts failed for img_url: {img_url}",
+            last_exception
+        ) from last_exception
 
     # endregion
 
