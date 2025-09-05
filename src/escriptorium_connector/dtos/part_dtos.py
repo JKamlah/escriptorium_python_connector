@@ -55,11 +55,11 @@ class GetPart:
     typology: Union[int, None]
     image: Image
     image_file_size: int
-    bw_image: Union[Image, None]
     order: int
     recoverable: bool
     transcription_progress: int
     source: str
+    bw_image: Union[Image, None] = None
     max_avg_confidence: Union[float, None] = None
     comments: Union[str, None] = None
     workflow: Union[Workflow, None] = None

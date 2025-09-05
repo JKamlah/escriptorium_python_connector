@@ -52,6 +52,8 @@ class GetAbbreviatedTranscription:
     name: str
     archived: bool
     avg_confidence: Optional[float]
+    created_at: Optional[datetime] = None
+    comments: Optional[str] = None
 
 
 @dataclass(init=True, frozen=True)
@@ -104,8 +106,8 @@ def parse_document(data: dict) -> GetDocument:
         read_direction=ReadDirection(data["read_direction"]),
         line_offset=LineOffset(data["line_offset"]),
         parts_count=data["parts_count"],
-        created_at=isoparse(data["created_at"]),
-        updated_at=isoparse(data["updated_at"]),
+        created_at=isoparse(data.get("created_at","")),
+        updated_at=isoparse(data.get("updated_at","")),
         transcriptions=[GetAbbreviatedTranscription(**t) for t in data.get("transcriptions", [])],
         valid_block_types=[GetRegionType(**b) for b in data.get("valid_block_types", [])],
         valid_line_types=[GetLineType(**l) for l in data.get("valid_line_types", [])],
